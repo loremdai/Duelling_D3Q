@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Discriminative Deep Dyna-Q: Robust Planning for Dialogue Policy Learning
 
 *An implementation of the 
@@ -230,6 +229,4 @@ Main papers to be cited
   year={2016}
 }
 ```
-=======
-# D3Q-Python3
->>>>>>> a84fa04 (Update README.md)
+
