@@ -117,7 +117,7 @@ class AgentDQN(Agent):
         if self.warm_start == 1:
             act_slot_response = copy.deepcopy(self.feasible_actions[self.action])   # 根据动作填槽
         else:
-            act_slot_response = copy.deepcopy(self.feasible_actions[self.action][0])
+            act_slot_response = copy.deepcopy(self.feasible_actions[self.action])
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
 
     def prepare_state_representation(self, state):
