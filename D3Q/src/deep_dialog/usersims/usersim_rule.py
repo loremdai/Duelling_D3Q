@@ -16,7 +16,7 @@ import argparse, json, random, copy
 from deep_dialog import dialog_config
 
 
-class RuleSimulator(UserSimulator)
+class RuleSimulator(UserSimulator):
     """ A rule-based user simulator for testing dialog policy """
 
     def __init__(self, movie_dict=None, act_set=None, slot_set=None, start_set=None, params=None):

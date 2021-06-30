@@ -871,4 +871,5 @@ def run_episodes(count, status):
     if agt == 9 and params['trained_model_path'] == None:
         save_performance_records(params['write_model_dir'], agt, performance_records)
 
+
 run_episodes(num_episodes, status)
