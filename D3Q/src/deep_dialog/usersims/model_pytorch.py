@@ -33,10 +33,17 @@ class SimulatorModel(nn.Module):
         state_size = 270
 
         if nn_type == "MLP":
-            self.s_enc_layer = nn.Linear(state_size, hidden_size)   # state encoder
-            # self.s_encode_layer=nn.Sequential(nn.Linear(state_size, hidden_size), nn.Softmax())
-            self.a_enc_layer = nn.Linear(agent_action_size, hidden_size)    # action encoder
-            # self.s_encode_layer=nn.Sequential(nn.Linear(agent_action_size, hidden_size), nn.Softmax())
+            # self.s_enc_layer = nn.Linear(state_size, hidden_size)   # state encoder
+            self.s_enc_layer=nn.Sequential(nn.Linear(state_size, hidden_size),
+                                               nn.ReLU(),
+                                               nn.Linear(hidden_size,hidden_size),
+                                               nn.Tanh())
+            # self.a_enc_layer = nn.Linear(agent_action_size, hidden_size)    # action encoder
+            self.a_enc_layer=nn.Sequential(nn.Linear(agent_action_size, hidden_size),
+                                               nn.ReLU(),
+                                               nn.Linear(hidden_size,hidden_size),
+                                               nn.Tanh())
+
             self.shared_layers = nn.Sequential(nn.Linear(hidden_size * 2, hidden_size), nn.Tanh())  # s&a concatenation
 
             self.s_next_pred_layer = nn.Linear(hidden_size, state_size)  # s_{t+1}
