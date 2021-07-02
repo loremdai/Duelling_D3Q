@@ -15,7 +15,9 @@ use_cuda = torch.cuda.is_available()
 class network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(network, self).__init__()
-        self.model = nn.Sequential(nn.Linear(input_size, hidden_size), nn.ReLU(), nn.Linear(hidden_size, output_size))
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_size),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_size, output_size))
 
     def forward(self, inputs):
         return self.model(inputs)
@@ -40,13 +42,14 @@ class DQN(nn.Module):
         lr = 0.001
 
         self.optimizer = optim.RMSprop(self.model.parameters(), lr=lr)
+
         self.batch_count = 0
 
         # self.to(device)
         if use_cuda:
             self.cuda()
 
-    # 更新目标网络
+    # 更新目标网络（将model的参数载入到target_model的参数）
     def update_fixed_target_network(self):
         self.target_model.load_state_dict(self.model.state_dict())
 
@@ -67,7 +70,7 @@ class DQN(nn.Module):
         q = self.model(s)
         q_prime = self.target_model(s_prime)    # 目标值网络
 
-        # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])
+        # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  TD误差部分
         td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
         loss += td_error.pow(2).sum()   # Loss Function是td-error的均方误差
 

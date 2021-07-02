@@ -14,6 +14,7 @@ from deep_dialog import dialog_config
 from deep_dialog.nlu import nlu
 from deep_dialog.nlg import nlg
 
+
 # <editor-fold desc="用于读取文件的辅助函数">
 def convertFile(originPath):
     origin_str = os.path.splitext(originPath)
@@ -28,6 +29,8 @@ def convertFile(originPath):
                 output.write(line + str.encode('\n'))
     print("successfully! ")
     return destiPath
+
+
 # </editor-fold>
 
 # <editor-fold desc="总参数设置">
@@ -151,18 +154,18 @@ if __name__ == "__main__":
 # </editor-fold>
 
 # <editor-fold desc="运行参数设置">
-dialog_config.run_mode = params['run_mode'] # 0:NL, 1:DA, 2:both
+dialog_config.run_mode = params['run_mode']  # 0:NL, 1:DA, 2:both
 dialog_config.auto_suggest = params['auto_suggest']  # 该参数只与agent_cmd相关
 
-warm_start = params['warm_start']   # 是否启用热启动
-warm_start_epochs = params['warm_start_epochs'] # 热启动轮数
+warm_start = params['warm_start']  # 是否启用热启动
+warm_start_epochs = params['warm_start_epochs']  # 热启动轮数
 
 success_rate_threshold = params['success_rate_threshold']
-save_check_point = params['save_check_point']   # 运行多少epoch保存一次模型
+save_check_point = params['save_check_point']  # 运行多少epoch保存一次模型
 
-max_turn = params['max_turn']   # 对话最大轮数
-num_episodes = params['episodes']   # epoch数
-simulation_epoch_size = params['simulation_epoch_size'] # 验证集大小
+max_turn = params['max_turn']  # 对话最大轮数
+num_episodes = params['episodes']  # epoch数
+simulation_epoch_size = params['simulation_epoch_size']  # 验证集大小
 batch_size = params['batch_size']  # default = 16
 planning_steps = params['planning_steps']
 
@@ -182,10 +185,10 @@ goal_file_path = convertFile(params['goal_file_path'])
 all_goal_set = pickle.load(open(goal_file_path, 'rb'))
 
 # 切分用户目标集
-split_fold = params.get('split_fold', 5)    # 切分折数，默认为5
+split_fold = params.get('split_fold', 5)  # 切分折数，默认为5
 goal_set = {'train': [], 'valid': [], 'test': [], 'all': []}
 for u_goal_id, u_goal in enumerate(all_goal_set):
-    if u_goal_id % split_fold == 1:     # 每5个目标中，有1个分到test集中，4个分到train集中
+    if u_goal_id % split_fold == 1:  # 每5个目标中，有1个分到test集中，4个分到train集中
         goal_set['test'].append(u_goal)
     else:
         goal_set['train'].append(u_goal)
@@ -219,6 +222,7 @@ usersim_params['hidden_size'] = params['dqn_hidden_size']
 # 实例化鉴别器
 discriminator = Discriminator(movie_dict=movie_dictionary, act_set=act_set, slot_set=slot_set, start_set=goal_set,
                               nn_type=params['discriminator_nn_type'], params=usersim_params)
+
 
 # 使用鉴别器来筛选出高质量的模拟经验
 def simulation_epoch_with_gan_control_filter(simulation_epoch_size, use_world_model=True,
@@ -255,15 +259,17 @@ def simulation_epoch_with_gan_control_filter(simulation_epoch_size, use_world_mo
         res['success_rate'], res['ave_reward'], res['ave_turns']))
     return res
 
+
 # 预训练鉴别器
 def simulation_epoch_for_pretrain_discriminator(simulation_epoch_size):
-    for episode in range(simulation_epoch_size):    # 执行simulation_epoch_size次对话
-        dialog_manager.initialize_episode(False)    # 使用世界模型
+    for episode in range(simulation_epoch_size):  # 执行simulation_epoch_size次对话
+        dialog_manager.initialize_episode(False)  # 使用世界模型
         episode_over = False
         while (not episode_over):
             episode_over, reward = dialog_manager.next_turn(record_training_data=False,
                                                             record_training_data_for_user=False)
     return 0
+
 
 # </editor-fold>
 
@@ -281,9 +287,9 @@ agent_params['gamma'] = params['gamma']
 agent_params['predict_mode'] = params['predict_mode']
 agent_params['trained_model_path'] = params['trained_model_path']
 agent_params['warm_start'] = params['warm_start']
-agent_params['cmd_input_mode'] = params['cmd_input_mode']   # 0 for NL; 1 for dia_act
+agent_params['cmd_input_mode'] = params['cmd_input_mode']  # 0 for NL; 1 for dia_act
 agent_params['planning_steps'] = params['planning_steps']
-agent_params['model_type'] = params['model_type']   # DQN DDQ D3Q
+agent_params['model_type'] = params['model_type']  # DQN DDQ D3Q
 agent_params['buffer_size_unit'] = params['buffer_size_unit']
 agent_params['planning_step_to_buffer'] = params['planning_step_to_buffer']
 
@@ -322,7 +328,7 @@ usersim_params['world_model_nn_type'] = params['world_model_nn_type']
 usersim_params['buffer_size_unit'] = params['buffer_size_unit']
 
 # 选择用户（模拟器）
-if usr == 0:    # 真实用户
+if usr == 0:  # 真实用户
     user_sim = RealUser(movie_dictionary, act_set, slot_set, goal_set, usersim_params)
     user_sim_planning = None
 elif usr == 1:  # 基于规则的用户模拟器 & 基于模型的用户模拟器
@@ -385,6 +391,7 @@ performance_records['discriminator_loss'] = {}
 performance_records['world_model_loss'] = {}
 performance_records['world_model_buffer_size'] = {}
 
+
 # save model
 def save_model(path, agt, success_rate, agent, best_epoch, cur_epoch):
     filename = 'agt_%s_%s_%s_%.5f.pkl' % (agt, best_epoch, cur_epoch, success_rate)
@@ -399,6 +406,7 @@ def save_model(path, agt, success_rate, agent, best_epoch, cur_epoch):
         print('Error: Writing model fails: %s' % (filepath))
         print(e)
 
+
 # Save performance numbers
 def save_performance_records(path, agt, records):
     filename = 'agt_%s_performance_records.json' % (agt)
@@ -409,6 +417,7 @@ def save_performance_records(path, agt, records):
     except Exception as e:
         print('Error: Writing model fails: %s' % (filepath))
         print(e)
+
 
 # </editor-fold>
 
@@ -421,10 +430,10 @@ def warm_start_simulation():
     res = {}
     warm_start_run_epochs = 0
     for _ in range(1):
-        for episode in range(warm_start_epochs):    # 在热启动阶段进行warm_start_epochs次的对话
+        for episode in range(warm_start_epochs):  # 在热启动阶段进行warm_start_epochs次的对话
             dialog_manager.initialize_episode(warm_start=True)  # 此处不启用世界模型
             episode_over = False
-            while (not episode_over):   # 与环境交互
+            while (not episode_over):  # 与环境交互
                 episode_over, reward = dialog_manager.next_turn()
                 cumulative_reward += reward
                 if episode_over:
@@ -439,7 +448,7 @@ def warm_start_simulation():
 
             warm_start_run_epochs += 1
 
-        if params['boosted']:   # boost the world model with examples generated by rule agent 是否也为世界模型进行热启动？
+        if params['boosted']:  # boost the world model with examples generated by rule agent 是否也为世界模型进行热启动？
             user_sim_planning.train(batch_size, 5)
 
     # 将回放缓存中的经验存放到pkl文件中
@@ -460,6 +469,7 @@ def warm_start_simulation():
     # 打印当前回放缓存大小
     print("Current experience replay buffer size %s" % (len(agent.experience_replay_pool)))
 
+
 # 直接载入预先得到的回放缓存经验
 def warm_start_simulation_preload():
     successes = 0
@@ -474,6 +484,7 @@ def warm_start_simulation_preload():
     user_sim_planning.train(batch_size, 5)
     agent.warm_start = 2
     print("Current experience replay buffer size %s" % (len(agent.experience_replay_pool)))
+
 
 # </editor-fold>
 
@@ -641,6 +652,7 @@ def simulation_ddq():
 
 
 def simulation_d3q():
+    res = {}    # 记录D3Q的成功率、平均奖励、平均对话轮数
     successes = 0
     cumulative_reward = 0
     cumulative_turns = 0
@@ -657,12 +669,12 @@ def simulation_d3q():
     print("| Collecting Experiences    |")
     print("| From Real Human           |")
     print("+---------------------------+")
-    res = {}
     simulation_count = 0
     total_simulation_count = 0
+
     while num_real_exp_this_episode < max_num_real_exp:
         # NOTE: dialog_manager.initialize_episode(False) will use world model
-        dialog_manager.initialize_episode(True) # 该阶段从人类（数据集）中收集真实经验，因此关闭世界模型。
+        dialog_manager.initialize_episode(True)  # 该阶段从人类（数据集）中收集真实经验，因此关闭世界模型。
         episode_over = False
         record_training_data = True
         simulation_count += 1
@@ -674,14 +686,17 @@ def simulation_d3q():
 
             episode_over, reward = dialog_manager.next_turn(
                 record_training_data=record_training_data,
-                filter_experience_by_discriminator=False)   # 此处不启用鉴别器
+                filter_experience_by_discriminator=False)  # 此处不启用鉴别器
+
             cumulative_reward += reward
+
             if episode_over:
                 if reward > 0:
                     successes += 1
                     print("simulation episode {}: Success".format(simulation_count))
                 else:
                     print("simulation episode {}: Fail".format(simulation_count))
+
                 cumulative_turns += dialog_manager.state_tracker.turn_count
 
     print("+---------------------------+")
@@ -689,45 +704,49 @@ def simulation_d3q():
     print("| From World Model          |")
     print("+---------------------------+")
     total_simulation_count += simulation_count  # 把上一个阶段的simulation_count汇总进total_simulation_count
-    simulation_count = 0    # 重新记录该阶段的simulation_count
+    simulation_count = 0  # 重新记录该阶段的simulation_count
+
     while num_fake_exp_this_episode < max_num_fake_exp:
-        # NOTE: dialog_manager.initialize_episode(False) will use world model
-        dialog_manager.initialize_episode(False)    # 该阶段从世界模型中收集模拟经验，因此启用世界模型
+        dialog_manager.initialize_episode(False)  # 该阶段从世界模型中收集模拟经验，因此启用世界模型
         episode_over = False
         record_training_data = True
         simulation_count += 1
+
         while (not episode_over):
             if num_fake_exp_this_episode >= max_num_fake_exp:
                 record_training_data = False
 
             episode_over, reward, discriminate_check = dialog_manager.next_turn(
                 record_training_data=record_training_data,
-                filter_experience_by_discriminator=True)    # 此处开启鉴别器筛选出高质量的模拟经验
-
+                filter_experience_by_discriminator=True)  # 此处开启鉴别器筛选出高质量的模拟经验
             if discriminate_check and record_training_data:
                 num_fake_exp_this_episode += 1  # 只有通过鉴别器检验的经验才算。
 
             cumulative_reward += reward
+
             if episode_over:
                 if reward > 0:
                     successes += 1
                     print("simulation episode {}: Success".format(simulation_count))
                 else:
                     print("simulation episode {}: Fail".format(simulation_count))
+
                 cumulative_turns += dialog_manager.state_tracker.turn_count
+
 
     total_simulation_count += simulation_count  # total_simulation_count中记录了2个阶段总的simulation_count
     res['success_rate'] = float(successes) / total_simulation_count
     res['ave_reward'] = float(cumulative_reward) / total_simulation_count
     res['ave_turns'] = float(cumulative_turns) / total_simulation_count
-    # 打印出2个阶段综合起来的成功率、平均奖励、平均对话轮数
     print("simulation success rate %s, ave reward %s, ave turns %s" % (
         res['success_rate'], res['ave_reward'], res['ave_turns']))
-    return res  # 返回包含统计结果的字典
+    return res  # 返回含统计结果的字典
 
 # </editor-fold>
 
+
 status = {'successes': 0, 'count': 0, 'cumulative_reward': 0}
+
 def run_episodes(count, status):
     successes = 0
     cumulative_reward = 0
@@ -746,24 +765,24 @@ def run_episodes(count, status):
     if agt == 9 and params['pretrain_discriminator']:
         print("pretraining the discriminator...")
         # TODO: use argument
-        for _ in range(20): # 做20次预训练鉴别器——未来可将其参数化
+        for _ in range(20):  # 做20次预训练鉴别器——未来可将其参数化
             simulation_epoch_for_pretrain_discriminator(3)  # 使用世界模型进行3次episode的对话
-            discriminator_loss = dialog_manager.discriminator.train()   # 训练鉴别器，返回损失
+            discriminator_loss = dialog_manager.discriminator.train()  # 训练鉴别器，返回损失
             print("discriminator loss: {}".format(discriminator_loss))
 
     # num_episode次主循环
     for episode in range(count):
         if params['model_type'] == 'D3Q' and episode == 0:
-            simulation_epoch_with_gan_control_filter(3, True)   # 使用世界模型
+            simulation_epoch_with_gan_control_filter(3, True)  # 仅在episode == 0时，使用世界模型
         else:
             simulation_epoch_with_gan_control_filter(3, False)  # 不使用世界模型
 
         # 每轮结束后更新目标网络
         agent.dqn.update_fixed_target_network()
 
-        print("Episode: %s" % (episode))
+        print("Episode: %s" % (episode))    # 打印当前episode
         agent.predict_mode = False
-        dialog_manager.initialize_episode(True) # 不使用世界模型
+        dialog_manager.initialize_episode(True)  # 不使用世界模型
         episode_over = False
         while (not episode_over):
             episode_over, reward = dialog_manager.next_turn(record_training_data_for_user=False)
@@ -840,6 +859,7 @@ def run_episodes(count, status):
                 print("discriminator loss: {}".format(discriminator_loss))
 
             agent.predict_mode = False
+
             print("Simulation success rate %s, Ave reward %s, Ave turns %s, Best success rate %s" % (
                 performance_records['success_rate'][episode],
                 performance_records['ave_reward'][episode],
@@ -852,23 +872,27 @@ def run_episodes(count, status):
                 agent.save_dqn(path)
             save_performance_records(params['write_model_dir'], agt, performance_records)
 
-        # 打印该轮的评价指标
-        print("Progress: %s / %s, Success rate: %s / %s Avg reward: %.2f Avg turns: %.2f" % (
-            episode + 1, count, successes, episode + 1, float(cumulative_reward) / (episode + 1),
+        # 打印该次episode的评价指标
+        print("Progress: %s / %s, Success rate: %.2f Avg reward: %.2f Avg turns: %.2f" % (
+            episode + 1, count,
+            float(successes) / (episode + 1),
+            float(cumulative_reward) / (episode + 1),
             float(cumulative_turns) / (episode + 1)))
 
 
     # 打印总循环结束后的评价指标
-    print("Success rate: %s / %s Avg reward: %.2f Avg turns: %.2f" % (
-        successes, count, float(cumulative_reward) / count, float(cumulative_turns) / count))
+    print("Success rate: %.2f Avg reward: %.2f Avg turns: %.2f" % (
+        float(successes) / count,
+        float(cumulative_reward) / count,
+        float(cumulative_turns) / count))
     status['successes'] += successes
     status['count'] += count
 
     # 保存模型和performance_records
-    path = '{}/dqn.model.epoch{}.ckpt'.format(params['write_model_dir'], '_final')
-    if params['save_model']:
+    path = '{}/dqn.model.epoch{}.ckpt'.format(params['write_model_dir'], '_final')  # 保存路径
+    if params['save_model']:  # 默认保存模型
         agent.save_dqn(path)
-    if agt == 9 and params['trained_model_path'] == None:
+    if agt == 9 and params['trained_model_path'] == None:  # 若agt=9且处于训练模式，追加保存性能记录
         save_performance_records(params['write_model_dir'], agt, performance_records)
 
 

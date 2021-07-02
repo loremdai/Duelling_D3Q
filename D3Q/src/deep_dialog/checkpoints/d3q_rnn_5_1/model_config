@@ -39,7 +39,7 @@ train_world_model: 1
 save_model: 1
 user_success_rate_threshold: 1
 agent_success_rate_threshold: 1
-pretrain_discriminator: 0
+pretrain_discriminator: 1
 discriminator_nn_type: RNN
 world_model_nn_type: MLP
 train_discriminator: 1
