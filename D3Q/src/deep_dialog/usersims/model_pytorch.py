@@ -13,15 +13,16 @@ import numpy as np
 
 use_cuda = torch.cuda.is_available()
 
+
 class SimulatorModel(nn.Module):
     def __init__(
             self,
             agent_action_size,  # 智能体动作的数量
-            hidden_size,    # 默认为80
-            state_size,     # 状态s的维度，当前固定size为270
-            user_action_size,   # 用户动作的数量
+            hidden_size,  # 默认为80
+            state_size,  # 状态s的维度，当前固定size为270
+            user_action_size,  # 用户动作的数量
             reward_size=1,
-            termination_size=1,     # 二元变量t的大小
+            termination_size=1,  # 二元变量t的大小
             nn_type="MLP",  # 当前神经网络类别只实现了MLP
             discriminator=None
     ):
@@ -34,35 +35,44 @@ class SimulatorModel(nn.Module):
 
         if nn_type == "MLP":
             # self.s_enc_layer = nn.Linear(state_size, hidden_size)   # state encoder
-            self.s_enc_layer=nn.Sequential(nn.Linear(state_size, hidden_size),
-                                               nn.ReLU(),
-                                               nn.Linear(hidden_size,hidden_size),
-                                               nn.Tanh())
+            self.s_enc_layer1 = nn.Sequential(nn.Linear(state_size, hidden_size),
+                                              nn.ReLU(),
+                                              nn.Linear(hidden_size, hidden_size),
+                                              nn.Sigmoid())
+            self.s_enc_layer2 = nn.Sequential(nn.Linear(state_size, hidden_size),
+                                              nn.ReLU(),
+                                              nn.Linear(hidden_size, hidden_size),
+                                              nn.Tanh())
+
             # self.a_enc_layer = nn.Linear(agent_action_size, hidden_size)    # action encoder
-            self.a_enc_layer=nn.Sequential(nn.Linear(agent_action_size, hidden_size),
-                                               nn.ReLU(),
-                                               nn.Linear(hidden_size,hidden_size),
-                                               nn.Tanh())
+            self.a_enc_layer1 = nn.Sequential(nn.Linear(agent_action_size, hidden_size),
+                                              nn.ReLU(),
+                                              nn.Linear(hidden_size, hidden_size),
+                                              nn.Sigmoid())
+            self.a_enc_layer2 = nn.Sequential(nn.Linear(agent_action_size, hidden_size),
+                                              nn.ReLU(),
+                                              nn.Linear(hidden_size, hidden_size),
+                                              nn.Tanh())
 
             self.shared_layers = nn.Sequential(nn.Linear(hidden_size * 2, hidden_size), nn.Tanh())  # s&a concatenation
 
             self.s_next_pred_layer = nn.Linear(hidden_size, state_size)  # s_{t+1}
             self.r_pred_layer = nn.Linear(hidden_size, reward_size)  # reward, regression
             # 稍后的损失函数BCEWithLogitsLoss已经包括了sigmoid，因此此处省略
-            self.t_pred_layer = nn.Sequential(nn.Linear(hidden_size, termination_size)) # term, classification
+            self.t_pred_layer = nn.Sequential(nn.Linear(hidden_size, termination_size))  # term, classification
             # 稍后的损失函数CrossEntropyLoss已经包括了log_softmax，因此此处省略
             self.au_pred_layer = nn.Sequential(nn.Linear(hidden_size, user_action_size))  # user-action, classification
 
         # hyper parameters
-        self.max_norm = 1   # 梯度裁剪参数
+        self.max_norm = 1  # 梯度裁剪参数
         lr = 0.001
 
-        # optimizer & loss functions
+        # optimizer
         self.optimizer = optim.RMSprop(self.parameters(), lr=lr)
-
-        self.CrossEntropyLoss = nn.CrossEntropyLoss()   # CrossEntropyLoss就是把Softmax–Log–NLLLoss合并成一步
+        # loss functions
+        self.CrossEntropyLoss = nn.CrossEntropyLoss()  # CrossEntropyLoss就是把Softmax–Log–NLLLoss合并成一步
         self.MSELoss = nn.MSELoss()
-        self.BCEWithLogitsLoss = nn.BCEWithLogitsLoss() # BCEWithLogitsLoss就是把Sigmoid-BCELoss合成一步
+        self.BCEWithLogitsLoss = nn.BCEWithLogitsLoss()  # BCEWithLogitsLoss就是把Sigmoid-BCELoss合成一步
 
         if use_cuda:
             self.cuda()
@@ -78,7 +88,7 @@ class SimulatorModel(nn.Module):
 
     # 训练世界模型
     def train(self, s_t, a_t, s_tp1, r_t, t_t, ua_t):
-        if self.nn_type == "MLP":   # [s_t, a_t, s_tp1,  r_t, t_t, ua_t]
+        if self.nn_type == "MLP":  # [s_t, a_t, s_tp1,  r_t, t_t, ua_t]
             loss = 0
             s = self.Variable(torch.FloatTensor(s_t))
             a = self.Variable(torch.FloatTensor(self.one_hot(a_t, self.agent_action_size)))
@@ -86,9 +96,16 @@ class SimulatorModel(nn.Module):
             t = self.Variable(torch.FloatTensor(np.int32(t_t)))
             au = self.Variable(torch.LongTensor(np.squeeze(ua_t)))
 
-            encoded_s = self.s_enc_layer(s)
-            encoded_a = self.a_enc_layer(a)
+            s_term1 = self.s_enc_layer1(s)
+            s_term2 = self.s_enc_layer2(s)
+            encoded_s = torch.mul(s_term1, s_term2)
+
+            a_term1 = self.a_enc_layer1(a)
+            a_term2 = self.a_enc_layer2(a)
+            encoded_a = torch.mul(a_term1, a_term2)
+
             h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
+
             r_pred = self.r_pred_layer(h)
             t_pred = self.t_pred_layer(h)
             au_pred = self.au_pred_layer(h)
@@ -106,8 +123,15 @@ class SimulatorModel(nn.Module):
         if self.nn_type == "MLP":
             s = self.Variable(torch.FloatTensor(s))
             a = self.Variable(torch.FloatTensor(self.one_hot(a, self.agent_action_size)))
-            encoded_s = self.s_enc_layer(s)
-            encoded_a = torch.unsqueeze(self.a_enc_layer(a), 0)
+            s_term1 = self.s_enc_layer1(s)
+            s_term2 = self.s_enc_layer2(s)
+            encoded_s = torch.mul(s_term1, s_term2)
+
+            a_term1 = self.a_enc_layer1(a)
+            a_term2 = self.a_enc_layer2(a)
+            a_term = torch.mul(a_term1, a_term2)
+            encoded_a = torch.unsqueeze(a_term, 0)
+
             h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
 
             r_pred = self.r_pred_layer(h).cpu().data.numpy()
