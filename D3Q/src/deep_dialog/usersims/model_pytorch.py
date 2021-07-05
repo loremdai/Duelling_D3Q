@@ -13,7 +13,6 @@ import numpy as np
 
 use_cuda = torch.cuda.is_available()
 
-
 class SimulatorModel(nn.Module):
     def __init__(
             self,
