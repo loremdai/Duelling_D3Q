@@ -5,7 +5,7 @@ import random
 
 from deep_dialog.dialog_system import DialogManager, text_to_dict
 from deep_dialog.agents import AgentCmd, InformAgent, RequestAllAgent, RandomAgent, EchoAgent, RequestBasicsAgent, \
-    AgentDQN
+    AgentDQN, AgentDuellingDQN
 from deep_dialog.usersims import RuleSimulator, ModelBasedSimulator
 from deep_dialog.controller import Discriminator
 
@@ -13,7 +13,6 @@ from deep_dialog import dialog_config
 
 from deep_dialog.nlu import nlu
 from deep_dialog.nlg import nlg
-
 
 # <editor-fold desc="用于读取文件的辅助函数">
 def convertFile(originPath):
@@ -29,8 +28,6 @@ def convertFile(originPath):
                 output.write(line + str.encode('\n'))
     print("successfully! ")
     return destiPath
-
-
 # </editor-fold>
 
 # <editor-fold desc="总参数设置">
@@ -63,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument('--intent_err_prob', dest='intent_err_prob', default=0.05, type=float,
                         help='the intent err probability')
 
-    parser.add_argument('--agt', dest='agt', default=9, type=int,
+    parser.add_argument('--agt', dest='agt', default=10, type=int,
                         help='Select an agent: 0 for a command line input, 1-6 for rule based agents')
     parser.add_argument('--usr', dest='usr', default=0, type=int,
                         help='Select a user simulator. 0 is a Frozen user simulator.')
@@ -174,16 +171,13 @@ usr = params['usr']  # 用户（模拟器）id
 
 # 设置随机种子
 seed = 2
-numpy.random.seed(seed)
 random.seed(seed)
 # </editor-fold>
 
 # <editor-fold desc="加载外部文件">
 ########## 加载与切分用户目标 ##########
-# 加载用户目标文件
 goal_file_path = convertFile(params['goal_file_path'])
 all_goal_set = pickle.load(open(goal_file_path, 'rb'))
-
 # 切分用户目标集
 split_fold = params.get('split_fold', 5)  # 切分折数，默认为5
 goal_set = {'train': [], 'valid': [], 'test': [], 'all': []}
@@ -308,6 +302,8 @@ elif agt == 5:
     agent = RequestBasicsAgent(movie_kb, act_set, slot_set, agent_params)
 elif agt == 9:
     agent = AgentDQN(movie_kb, act_set, slot_set, agent_params)
+elif agt == 10:
+    agent = AgentDuellingDQN(movie_kb, act_set, slot_set, agent_params)
 # add your custom agent here
 else:
     pass
@@ -397,7 +393,7 @@ def save_model(path, agt, success_rate, agent, best_epoch, cur_epoch):
     filename = 'agt_%s_%s_%s_%.5f.pkl' % (agt, best_epoch, cur_epoch, success_rate)
     filepath = os.path.join(path, filename)
     checkpoint = {}
-    if agt == 9: checkpoint['model'] = copy.deepcopy(agent.dqn.model)
+    if agt == 10: checkpoint['model'] = copy.deepcopy(agent.dqn.model)
     checkpoint['params'] = params
     try:
         pickle.dump(checkpoint, open(filepath, "w"))
@@ -421,7 +417,7 @@ def save_performance_records(path, agt, records):
 
 # </editor-fold>
 
-# <editor-fold desc="热启动函数 (by Rule Policy)">
+# <editor-fold desc="热启动相关 (by Rule Policy)">
 def warm_start_simulation():
     successes = 0
     cumulative_reward = 0
@@ -469,7 +465,6 @@ def warm_start_simulation():
     # 打印当前回放缓存大小
     print("Current experience replay buffer size %s" % (len(agent.experience_replay_pool)))
 
-
 # 直接载入预先得到的回放缓存经验
 def warm_start_simulation_preload():
     successes = 0
@@ -489,7 +484,7 @@ def warm_start_simulation_preload():
 # </editor-fold>
 
 # <editor-fold desc="Simulation, DQN, DDQ, D3Q">
-# Validation 用于验证的函数
+# Validation
 def simulation_epoch(simulation_epoch_size):
     successes = 0
     cumulative_reward = 0
@@ -744,7 +739,6 @@ def simulation_d3q():
 
 # </editor-fold>
 
-
 status = {'successes': 0, 'count': 0, 'cumulative_reward': 0}
 
 def run_episodes(count, status):
@@ -753,7 +747,7 @@ def run_episodes(count, status):
     cumulative_turns = 0
 
     # 热启动
-    if agt == 9 and params['trained_model_path'] == None and warm_start == 1:
+    if agt == 10 and params['trained_model_path'] == None and warm_start == 1:
         print('warm_start starting ...')
         warm_start_simulation()
 
@@ -762,7 +756,7 @@ def run_episodes(count, status):
         print('warm_start finished, start RL training ...')
 
     # 预训练鉴别器
-    if agt == 9 and params['pretrain_discriminator']:
+    if agt == 10 and params['pretrain_discriminator']:
         print("pretraining the discriminator...")
         # TODO: use argument
         for _ in range(20):  # 做20次预训练鉴别器——未来可将其参数化
@@ -777,8 +771,8 @@ def run_episodes(count, status):
         else:
             simulation_epoch_with_gan_control_filter(3, False)  # 不使用世界模型
 
-        # 每轮结束后更新目标网络
-        agent.dqn.update_fixed_target_network()
+        # 每轮episode结束后更新目标网络
+        agent.duelling_dqn.update_fixed_target_network()
 
         print("Episode: %s" % (episode))    # 打印当前episode
         agent.predict_mode = False
@@ -797,7 +791,7 @@ def run_episodes(count, status):
                 cumulative_turns += dialog_manager.state_tracker.turn_count
 
         # 实施D3Q、DDQ、DQN算法
-        if agt == 9 and params['trained_model_path'] == None:
+        if agt == 10 and params['trained_model_path'] == None:
             agent.predict_mode = True
             user_sim_planning.predict_mode = True
 
@@ -867,33 +861,35 @@ def run_episodes(count, status):
                 best_res['success_rate']))
 
             # 每执行50轮循环，保存模型和performance_records
-            path = '{}/dqn.model.epoch{}.ckpt'.format(params['write_model_dir'], episode)
+            path = '{}/duellingdqn.model.epoch{}'.format(params['write_model_dir'], episode)
             if params['save_model'] and episode % 50 == 0:
-                agent.save_dqn(path)
+                agent.save_duelling_dqn(path)
             save_performance_records(params['write_model_dir'], agt, performance_records)
 
         # 打印该次episode的评价指标
-        print("Progress: %s / %s, Success rate: %.2f Avg reward: %.2f Avg turns: %.2f" % (
-            episode + 1, count,
-            float(successes) / (episode + 1),
+        print("Progress: %s / %s, Success rate: %s / %s Avg reward: %.2f Avg turns: %.2f" % (
+            episode + 1,
+            count,
+            successes,
+            episode + 1,
             float(cumulative_reward) / (episode + 1),
             float(cumulative_turns) / (episode + 1)))
 
 
     # 打印总循环结束后的评价指标
-    print("Success rate: %.2f Avg reward: %.2f Avg turns: %.2f" % (
-        float(successes) / count,
+    print("Success rate: %s / %s Avg reward: %.2f Avg turns: %.2f" % (
+        successes,
+        count,
         float(cumulative_reward) / count,
         float(cumulative_turns) / count))
     status['successes'] += successes
     status['count'] += count
 
     # 保存模型和performance_records
-    path = '{}/dqn.model.epoch{}.ckpt'.format(params['write_model_dir'], '_final')  # 保存路径
+    path = '{}/duellingdqn.model.epoch{}'.format(params['write_model_dir'], '_final')  # 保存路径
     if params['save_model']:  # 默认保存模型
-        agent.save_dqn(path)
-    if agt == 9 and params['trained_model_path'] == None:  # 若agt=9且处于训练模式，追加保存性能记录
+        agent.save_duelling_dqn(path)
+    if agt == 10 and params['trained_model_path'] == None:  # 若agt=10且处于训练模式，追加保存性能记录
         save_performance_records(params['write_model_dir'], agt, performance_records)
-
 
 run_episodes(num_episodes, status)

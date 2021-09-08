@@ -91,16 +91,6 @@ class AgentDQN(Agent):
             self.warm_start = 2
         '''
 
-    # copy actions
-    def set_actions(self, the_actions):
-        self.available_actions = copy.deepcopy(the_actions)
-        self.new_actions = copy.deepcopy(the_actions)
-
-    def add_actions(self, new_actions):
-        self.new_actions = copy.deepcopy(new_actions)
-        self.available_actions += new_actions
-        # self.q_network.add_actions(new_actions)
-
     def initialize_episode(self):
         """ Initialize a new episode. This function is called every time a new episode is run. """
 
@@ -110,14 +100,9 @@ class AgentDQN(Agent):
 
     def state_to_action(self, state):
         """ DQN: Input state, output action """
-
         self.representation = self.prepare_state_representation(state)  # 将状态转换成可输入的状态表示
         self.action = self.run_policy(self.representation)  # 基于状态表示，根据epsilon-greedy策略得到动作
-
-        if self.warm_start == 1:
-            act_slot_response = copy.deepcopy(self.feasible_actions[self.action])   # 根据动作填槽
-        else:
-            act_slot_response = copy.deepcopy(self.feasible_actions[self.action])
+        act_slot_response = copy.deepcopy(self.feasible_actions[self.action])   # 根据动作填槽
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
 
     def prepare_state_representation(self, state):
@@ -230,7 +215,8 @@ class AgentDQN(Agent):
         if random.random() < self.epsilon:  # 处于epsilon概率则随机选择动作
             return random.choice(self.available_actions)
         else:
-            if self.warm_start == 1:    # 若当前处于热启动阶段，则按照基于规则的策略选择动作
+            # 若当前处于热启动阶段，则按照基于规则的策略选择动作
+            if self.warm_start == 1:
                 if len(self.experience_replay_pool) > self.experience_replay_pool_size: # 若回放缓存池溢出
                     self.warm_start = 2
                 return self.rule_policy()   # 返回的是索引
@@ -265,7 +251,7 @@ class AgentDQN(Agent):
 
         return self.action_index(act_slot_response) # 返回动作所对应的索引
 
-    # 返回给定动作所对应的索引
+    # 返回给定动作所对应的索引（被函数rule_policy调用）
     def action_index(self, act_slot_response):
         """ Return the index of action """
 
@@ -355,6 +341,8 @@ class AgentDQN(Agent):
 
     def set_user_planning(self, user_planning):
         self.user_planning = user_planning
+
+
     ################################################################################
     #    Debug Functions
     ################################################################################
@@ -382,11 +370,22 @@ class AgentDQN(Agent):
         print("trained DQN Parameters:", json.dumps(trained_file['params'], indent=2))
         return model
 
-
-
     def save_dqn(self, path):
         # return self.dqn.unzip()
         self.dqn.save_model(path)
 
     def load_dqn(self, params):
         self.dqn.load(params)
+
+    ################################################################################
+    #    not-be-used functions
+    ################################################################################
+    # copy actions
+    # def set_actions(self, the_actions):
+    #     self.available_actions = copy.deepcopy(the_actions)
+    #     self.new_actions = copy.deepcopy(the_actions)
+    #
+    # def add_actions(self, new_actions):
+    #     self.new_actions = copy.deepcopy(new_actions)
+    #     self.available_actions += new_actions
+    #     # self.q_network.add_actions(new_actions)

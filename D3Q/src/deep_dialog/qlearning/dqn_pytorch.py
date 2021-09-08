@@ -57,7 +57,7 @@ class DQN(nn.Module):
         return Variable(x, requires_grad=False).cuda() if use_cuda else Variable(x, requires_grad=False)
 
     # 在AgentDQN的train/train_iter函数中被调用
-    def singleBatch(self, batch):   # batch的大小为(5,16)
+    def singleBatch(self, batch):   # batch的大小为(5,16)，所需的资料都在batch中了
         self.optimizer.zero_grad()
         loss = 0
 
@@ -73,7 +73,6 @@ class DQN(nn.Module):
         # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  TD误差部分
         td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
         loss += td_error.pow(2).sum()   # Loss Function是td-error的均方误差
-
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
