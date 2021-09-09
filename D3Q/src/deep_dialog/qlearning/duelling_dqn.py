@@ -48,7 +48,7 @@ class DuellingDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 1
         self.target_update_period = 100
-        lr = 0.002
+        lr = 0.004
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
