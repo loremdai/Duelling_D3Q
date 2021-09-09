@@ -9,7 +9,7 @@ from torch.nn.utils import clip_grad_norm_
 import torch.optim as optim
 import numpy as np
 
-########## 该文件为世界模型代码 ##########
+########## 该文件为世界模型代码(在usersim_model.py文件中被调用） ##########
 
 use_cuda = torch.cuda.is_available()
 

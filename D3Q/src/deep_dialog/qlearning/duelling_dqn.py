@@ -12,23 +12,23 @@ import numpy as np
 use_cuda = torch.cuda.is_available()
 
 
-class network(nn.Module):
+class Network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
-        super(network, self).__init__()
-        self.model = nn.Sequential(nn.Linear(input_size, hidden_size),
-                                   nn.ReLU())
-        self.value = nn.Sequential(nn.Linear(hidden_size, hidden_size),
-                                   nn.ReLU(),
-                                   nn.Linear(hidden_size, 1))
-        self.advantage = nn.Sequential(nn.Linear(hidden_size, hidden_size),
-                                       nn.ReLU(),
-                                       nn.Linear(hidden_size, output_size))
+        super(Network, self).__init__()
+        self.feature_layer = nn.Sequential(nn.Linear(input_size, hidden_size),
+                                           nn.ReLU())
+        self.value_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
+                                         nn.ReLU(),
+                                         nn.Linear(hidden_size, 1))
+        self.advantage_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
+                                             nn.ReLU(),
+                                             nn.Linear(hidden_size, output_size))
 
     def forward(self, inputs):
-        out = self.model(inputs)
-        value = self.value(out)
-        advantage = self.advantage(out)
-        q = value + advantage - torch.mean(advantage, dim=1, keepdim=True)
+        out = self.feature_layer(inputs)
+        value = self.value_layer(out)
+        advantage = self.advantage_layer(out)
+        q = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
         return q
 
 
@@ -37,9 +37,9 @@ class DuellingDQN(nn.Module):
         super(DuellingDQN, self).__init__()
 
         # model
-        self.model = network(input_size, hidden_size, output_size)
+        self.model = Network(input_size, hidden_size, output_size)
         # target model
-        self.target_model = network(input_size, hidden_size, output_size)
+        self.target_model = Network(input_size, hidden_size, output_size)
         # first sync
         self.target_model.load_state_dict(self.model.state_dict())
 
@@ -48,7 +48,7 @@ class DuellingDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 1
         self.target_update_period = 100
-        lr = 0.004
+        lr = 0.005
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -66,18 +66,18 @@ class DuellingDQN(nn.Module):
         return Variable(x, requires_grad=False).cuda() if use_cuda else Variable(x, requires_grad=False)
 
     # 在AgentDuellingDQN的train/train_iter函数中被调用
-    def singleBatch(self, batch):  # batch的大小为(5,16)，所需的资料都在batch中了
+    def singleBatch(self, batch):
         self.optimizer.zero_grad()
         loss = 0
 
         # each example in a batch: [s, a, r, s_prime, term]
-        s = self.Variable(torch.FloatTensor(batch[0]))  # size: (1,16)
-        a = self.Variable(torch.LongTensor(batch[1]))  # size: (1,16)
-        r = self.Variable(torch.FloatTensor([batch[2]]))  # size: (1,16)
-        s_prime = self.Variable(torch.FloatTensor(batch[3]))  # size: (1,16)
+        s = self.Variable(torch.FloatTensor(batch[0]))  # size: (16,213)
+        a = self.Variable(torch.LongTensor(batch[1]))  # size: (16,1)
+        r = self.Variable(torch.FloatTensor([batch[2]]))  # size: (1,16,1)
+        s_prime = self.Variable(torch.FloatTensor(batch[3]))  # size: (16,213)
 
-        q = self.model(s)
-        q_prime = self.target_model(s_prime)  # 目标值网络
+        q = self.model(s)  # size: (16,31)
+        q_prime = self.target_model(s_prime)
 
         # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  TD误差部分
         td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
