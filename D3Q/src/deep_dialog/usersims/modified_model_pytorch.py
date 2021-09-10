@@ -67,7 +67,7 @@ class SimulatorModel(nn.Module):
         lr = 0.001
 
         # optimizer
-        self.optimizer = optim.RMSprop(self.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)
         # loss functions
         self.CrossEntropyLoss = nn.CrossEntropyLoss()  # CrossEntropyLoss就是把Softmax–Log–NLLLoss合并成一步
         self.MSELoss = nn.MSELoss()
