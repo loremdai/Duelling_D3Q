@@ -33,25 +33,11 @@ use_cuda = torch.cuda.is_available()
 #         return q
 
 class NoisyLinear(nn.Module):
-    """Noisy linear module for NoisyNet.
-
-    Attributes:
-        input_size (int): input size of linear module
-        output_size (int): output size of linear module
-        std_init (float): initial std value
-        weight_mu (nn.Parameter): mean value weight parameter
-        weight_sigma (nn.Parameter): std value weight parameter
-        bias_mu (nn.Parameter): mean value bias parameter
-        bias_sigma (nn.Parameter): std value bias parameter
-
-    """
-
-    def __init__(self, input_size: int, output_size: int, std_init: float = 0.5):
-        """Initialization."""
+    def __init__(self, input_size, output_size, std_init: float = 0.5):
         super(NoisyLinear, self).__init__()
 
-        self.in_features = input_size
-        self.out_features = output_size
+        self.input_size = input_size
+        self.output_size = output_size
         self.std_init = std_init
 
         self.weight_mu = nn.Parameter(torch.Tensor(output_size, input_size))
@@ -70,21 +56,21 @@ class NoisyLinear(nn.Module):
         self.reset_noise()
 
     def reset_parameters(self):
-        """Reset trainable network parameters (factorized gaussian noise)."""
-        mu_range = 1 / math.sqrt(self.in_features)
+        """implement factorized gaussian noise"""
+        mu_range = 1 / math.sqrt(self.input_size)
         self.weight_mu.data.uniform_(-mu_range, mu_range)
         self.weight_sigma.data.fill_(
-            self.std_init / math.sqrt(self.in_features)
+            self.std_init / math.sqrt(self.input_size)
         )
         self.bias_mu.data.uniform_(-mu_range, mu_range)
         self.bias_sigma.data.fill_(
-            self.std_init / math.sqrt(self.out_features)
+            self.std_init / math.sqrt(self.output_size)
         )
 
     def reset_noise(self):
         """Make new noise."""
-        epsilon_in = self.scale_noise(self.in_features)
-        epsilon_out = self.scale_noise(self.out_features)
+        epsilon_in = self.scale_noise(self.input_size)
+        epsilon_out = self.scale_noise(self.output_size)
 
         # outer product
         self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
@@ -153,7 +139,7 @@ class DuellingDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 1
         self.target_update_period = 100
-        lr = 0.004
+        lr = 0.003
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -196,8 +182,6 @@ class DuellingDQN(nn.Module):
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
-
-
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
