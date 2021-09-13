@@ -36,8 +36,8 @@ class NoisyLinear(nn.Module):
     """Noisy linear module for NoisyNet.
 
     Attributes:
-        in_features (int): input size of linear module
-        out_features (int): output size of linear module
+        input_size (int): input size of linear module
+        output_size (int): output size of linear module
         std_init (float): initial std value
         weight_mu (nn.Parameter): mean value weight parameter
         weight_sigma (nn.Parameter): std value weight parameter
@@ -46,25 +46,25 @@ class NoisyLinear(nn.Module):
 
     """
 
-    def __init__(self, in_features: int, out_features: int, std_init: float = 0.5):
+    def __init__(self, input_size: int, output_size: int, std_init: float = 0.5):
         """Initialization."""
         super(NoisyLinear, self).__init__()
 
-        self.in_features = in_features
-        self.out_features = out_features
+        self.in_features = input_size
+        self.out_features = output_size
         self.std_init = std_init
 
-        self.weight_mu = nn.Parameter(torch.Tensor(out_features, in_features))
+        self.weight_mu = nn.Parameter(torch.Tensor(output_size, input_size))
         self.weight_sigma = nn.Parameter(
-            torch.Tensor(out_features, in_features)
+            torch.Tensor(output_size, input_size)
         )
         self.register_buffer(
-            "weight_epsilon", torch.Tensor(out_features, in_features)
+            "weight_epsilon", torch.Tensor(output_size, input_size)
         )
 
-        self.bias_mu = nn.Parameter(torch.Tensor(out_features))
-        self.bias_sigma = nn.Parameter(torch.Tensor(out_features))
-        self.register_buffer("bias_epsilon", torch.Tensor(out_features))
+        self.bias_mu = nn.Parameter(torch.Tensor(output_size))
+        self.bias_sigma = nn.Parameter(torch.Tensor(output_size))
+        self.register_buffer("bias_epsilon", torch.Tensor(output_size))
 
         self.reset_parameters()
         self.reset_noise()
@@ -91,11 +91,6 @@ class NoisyLinear(nn.Module):
         self.bias_epsilon.copy_(epsilon_out)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward method implementation.
-
-        We don't use separate statements on train / eval mode.
-        It doesn't show remarkable difference of performance.
-        """
         return F.linear(
             x,
             self.weight_mu + self.weight_sigma * self.weight_epsilon,
@@ -158,7 +153,7 @@ class DuellingDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 1
         self.target_update_period = 100
-        lr = 0.002
+        lr = 0.004
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
