@@ -209,21 +209,34 @@ class AgentDuellingDQN(Agent):
         return self.final_representation
 
     # epsilon-贪婪策略
-    def run_policy(self, representation):
-        """ epsilon-greedy policy """
+    # def run_policy(self, representation):
+    #     """ epsilon-greedy policy """
+    #
+    #     if random.random() < self.epsilon:  # 处于epsilon概率则随机选择动作
+    #         return random.choice(self.available_actions)
+    #     else:
+    #         # 若当前处于热启动阶段，则按照基于规则的策略选择动作
+    #         if self.warm_start == 1:
+    #             if len(self.experience_replay_pool) > self.experience_replay_pool_size: # 若回放缓存池溢出
+    #                 self.warm_start = 2
+    #             return self.rule_policy()   # 返回的是索引
+    #         else:   # 若不是热启动阶段，则基于DQN选择动作
+    #             return self.available_actions[
+    #                 np.argmax(self.duelling_dqn.predict(representation)[self.available_actions])
+    #             ]
 
-        if random.random() < self.epsilon:  # 处于epsilon概率则随机选择动作
-            return random.choice(self.available_actions)
-        else:
-            # 若当前处于热启动阶段，则按照基于规则的策略选择动作
-            if self.warm_start == 1:
-                if len(self.experience_replay_pool) > self.experience_replay_pool_size: # 若回放缓存池溢出
-                    self.warm_start = 2
-                return self.rule_policy()   # 返回的是索引
-            else:   # 若不是热启动阶段，则基于DQN选择动作
-                return self.available_actions[
-                    np.argmax(self.duelling_dqn.predict(representation)[self.available_actions])
-                ]
+    # NoisyNet version
+    def run_policy(self, representation):
+        """ no epsilon greedy action selection """
+        if self.warm_start == 1:
+            if len(self.experience_replay_pool) > self.experience_replay_pool_size:  # 若回放缓存池溢出
+                self.warm_start = 2
+            return self.rule_policy()  # 返回的是索引
+        else:  # 若不是热启动阶段，则基于DQN选择动作
+            return self.available_actions[
+                np.argmax(self.duelling_dqn.predict(representation)[self.available_actions])
+            ]
+
 
     # 规则策略
     def rule_policy(self):
