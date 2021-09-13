@@ -137,10 +137,10 @@ class Network(nn.Module):
 
     def reset_noise(self):
         """Reset all noisy layers."""
-        self.advantage_hidden_layer.reset_noise()
-        self.advantage_layer.reset_noise()
-        self.value_hidden_layer.reset_noise()
+        self.value_hid_layer.reset_noise()
         self.value_layer.reset_noise()
+        self.advantage_hid_layer.reset_noise()
+        self.advantage_layer.reset_noise()
 
 
 class DuellingDQN(nn.Module):
