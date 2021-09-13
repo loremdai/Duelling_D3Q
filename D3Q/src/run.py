@@ -772,7 +772,10 @@ def run_episodes(count, status):
             simulation_epoch_with_gan_control_filter(3, False)  # 不使用世界模型
 
         # 每轮episode结束后更新目标网络
-        agent.duelling_dqn.update_fixed_target_network()
+        # agent.duelling_dqn.update_fixed_target_network()
+
+        # 每轮episode结束后更新网络
+        agent.duelling_dqn.update_network()
 
         print("Episode: %s" % (episode))    # 打印当前episode
         agent.predict_mode = False

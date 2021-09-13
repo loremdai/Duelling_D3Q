@@ -13,6 +13,24 @@ import numpy as np
 
 use_cuda = torch.cuda.is_available()
 
+# class Network(nn.Module):
+#     def __init__(self, input_size, hidden_size, output_size):
+#         super(Network, self).__init__()
+#         self.feature_layer = nn.Sequential(nn.Linear(input_size, hidden_size),
+#                                            nn.ReLU())
+#         self.value_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
+#                                          nn.ReLU(),
+#                                          nn.Linear(hidden_size, 1))
+#         self.advantage_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
+#                                              nn.ReLU(),
+#                                              nn.Linear(hidden_size, output_size))
+#
+#     def forward(self, inputs):
+#         out = self.feature_layer(inputs)
+#         value = self.value_layer(out)
+#         advantage = self.advantage_layer(out)
+#         q = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
+#         return q
 
 class NoisyLinear(nn.Module):
     """Noisy linear module for NoisyNet.
@@ -92,25 +110,6 @@ class NoisyLinear(nn.Module):
         return x.sign().mul(x.abs().sqrt())
 
 
-# class Network(nn.Module):
-#     def __init__(self, input_size, hidden_size, output_size):
-#         super(Network, self).__init__()
-#         self.feature_layer = nn.Sequential(nn.Linear(input_size, hidden_size),
-#                                            nn.ReLU())
-#         self.value_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
-#                                          nn.ReLU(),
-#                                          nn.Linear(hidden_size, 1))
-#         self.advantage_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
-#                                              nn.ReLU(),
-#                                              nn.Linear(hidden_size, output_size))
-#
-#     def forward(self, inputs):
-#         out = self.feature_layer(inputs)
-#         value = self.value_layer(out)
-#         advantage = self.advantage_layer(out)
-#         q = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
-#         return q
-
 class Network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(Network, self).__init__()
@@ -171,6 +170,14 @@ class DuellingDQN(nn.Module):
     def update_fixed_target_network(self):
         self.target_model.load_state_dict(self.model.state_dict())
 
+    # 更新网络
+    def update_network(self):
+        # update target network
+        self.target_model.load_state_dict(self.model.state_dict())
+        # NoisyNet settings: (reset noise)
+        self.model.reset_noise()
+        self.target_model.reset_noise()
+
     def Variable(self, x):
         return Variable(x, requires_grad=False).cuda() if use_cuda else Variable(x, requires_grad=False)
 
@@ -195,9 +202,7 @@ class DuellingDQN(nn.Module):
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
 
-        # NoisyNet settings: (reset noise)
-        self.model.reset_noise()
-        self.target_model.reset_noise()
+
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
