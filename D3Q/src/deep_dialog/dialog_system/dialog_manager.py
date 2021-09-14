@@ -31,13 +31,12 @@ class DialogManager:
         self.user_actions_for_dump = []  # after warm start
         self.user_action = None
 
-
     def initialize_episode(self, warm_start=False):
         """ Refresh state for new dialog """
         self.reward = 0
         self.episode_over = False
         self.use_model = False
-        #self.running_user=self.user
+        # self.running_user=self.user
 
         # 根据是否采用热启动，选择对应的用户模拟器
         if not warm_start:  # 未采用热启动
@@ -47,7 +46,7 @@ class DialogManager:
             self.running_user = self.user  # 使用"基于规则的用户模拟器"作为"正在运行的用户模拟器"
             self.use_model = False  # 不使用世界模型
 
-        self.state_tracker.initialize_episode() # DST初始化episode
+        self.state_tracker.initialize_episode()  # DST初始化episode
         self.agent.initialize_episode()  # 智能体初始化episode
         self.user_action = self.running_user.initialize_episode()  # 用户模拟器初始化episode
         self.state_tracker.update(user_action=self.user_action)  # 更新状态
@@ -78,7 +77,7 @@ class DialogManager:
         ########################################################################
         #   Register AGENT action with the state_tracker
         ########################################################################
-        self.state_tracker.update(agent_action=self.agent_action)   # 更新状态
+        self.state_tracker.update(agent_action=self.agent_action)  # 更新状态
         self.agent.add_nl_to_action(self.agent_action)  # add NL to Agent Dia_Act
         self.print_function(agent_action=self.agent_action['act_slot_response'])
 
@@ -98,8 +97,8 @@ class DialogManager:
         #   Update state tracker with latest user action
         ########################################################################
         if self.episode_over != True:  # 若该episode仍未结束
-            self.state_tracker.update(user_action=self.user_action) # 更新状态
-            self.print_function(user_action=self.user_action)   # 打印
+            self.state_tracker.update(user_action=self.user_action)  # 更新状态
+            self.print_function(user_action=self.user_action)  # 打印
         self.state_user_next = self.state_tracker.get_state_for_agent()
 
         ########################################################################
@@ -111,13 +110,13 @@ class DialogManager:
                 self.discriminator.store_user_model_experience((
                     self.state_user, self.agent.action, self.state_user_next,
                     self.reward, self.episode_over, self.user_action))
-            else:   # 未使用世界模型 （注意区别函数）
+            else:  # 未使用世界模型 （注意区别函数）
                 self.discriminator.store_user_experience((
                     self.state_user, self.agent.action, self.state_user_next,
                     self.reward, self.episode_over, self.user_action))
 
             # store the experiences for the agent
-            if self.use_model and filter_experience_by_discriminator:   # 若使用了世界模型和鉴别器
+            if self.use_model and filter_experience_by_discriminator:  # 若使用了世界模型和鉴别器
                 discriminate_check = self.discriminator.single_check((self.state, self.agent_action, self.reward,
                                                                       self.state_tracker.get_state_for_agent(),
                                                                       self.episode_over, self.state_user,
@@ -133,12 +132,12 @@ class DialogManager:
                                                             self.state_user, self.use_model)
 
             # store the experiences for the world model
-            if record_training_data_for_user and not self.use_model:    # 未使用世界模型
+            if record_training_data_for_user and not self.use_model:  # 未使用世界模型
                 self.user_planning.register_experience_replay_tuple(self.state_user, self.agent.action,
                                                                     self.state_user_next, self.reward,
                                                                     self.episode_over, self.user_action)
 
-            if self.use_model and filter_experience_by_discriminator:   # 使用世界模型和鉴别器
+            if self.use_model and filter_experience_by_discriminator:  # 使用世界模型和鉴别器
                 return (self.episode_over, self.reward, discriminate_check)
             else:
                 return (self.episode_over, self.reward)
@@ -155,7 +154,7 @@ class DialogManager:
         elif dialog_status == dialog_config.SUCCESS_DIALOG:
             reward = 2 * self.user.max_turn  # +80 (2*L)
         else:
-            reward = -1 # in each turn, a reward -1 is provided to encourage shorter dialogues
+            reward = -1  # in each turn, a reward -1 is provided to encourage shorter dialogues
         return reward
 
     # Reward Function 2: a reward function without penalty on per turn and failure dialog

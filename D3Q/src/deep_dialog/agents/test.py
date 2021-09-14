@@ -66,28 +66,10 @@ probs = torch.FloatTensor([[0.0557, 0.0296, 0.1242, 0.0795, 0.0192, 0.0156, 0.01
                             0.0133, 0.0119, 0.0100, 0.0725, 0.0099, 0.0023, 0.0117, 0.0057, 0.0043,
                             0.0050, 0.0278, 0.0325, 0.0025]])
 
-probs2 = torch.FloatTensor([0.0557, 0.0296, 0.1242, 0.0795, 0.0192, 0.0156, 0.0106, 0.0360, 0.0386,
-                            0.0310, 0.0831, 0.0731, 0.0064, 0.0434, 0.0182, 0.0087, 0.0391, 0.0154,
-                            0.0206, 0.0168, 0.0167, 0.0804, 0.0172, 0.0054, 0.0160, 0.0096, 0.0087,
-                            0.0103, 0.0305, 0.0343, 0.0057])
-actions_argmax = torch.argmax(probs2).item()
-print("actions_argmax: ")
-print(actions_argmax)
-print("\n")
+print(probs.size())
+a = torch.argmax(probs, dim=1, keepdim=True)
+print(a.size())
+print(a)
 
-max, indices = torch.max(probs, dim=1)
-log=torch.log(max)
-
-print(indices)
-print("max: ")
-print(max)
-print("log: ")
-print(log)
-print("\n")
-
-dist = Categorical(probs=probs)
-actions = dist.sample()
-log_prob = dist.log_prob(actions)
-print(actions)
-
-print(log_prob)
+b = torch.gather(probs, dim=1, index=a)
+print(b)

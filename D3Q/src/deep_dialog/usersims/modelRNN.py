@@ -1,4 +1,5 @@
 __author__ = 'pberlin'
+
 # from .utils import *
 import theano
 import theano.tensor as tensor
@@ -20,6 +21,7 @@ layers = {'ff': ('param_init_fflayer', 'fflayer'),
           'gru_cond': ('param_init_gru_cond', 'gru_cond_layer'),
           }
 
+
 # push parameters to Theano shared variables
 def zipp(params, tparams):
     for kk, vv in params.iteritems():
@@ -35,13 +37,15 @@ def unzip(zipped):
 
 
 # get the list of parameters: Note that tparams must be OrderedDict
-def itemlist(tparams,ignore=None):
+def itemlist(tparams, ignore=None):
     l = []
-    print 'start new', ignore
+    print
+    'start new', ignore
     for kk, vv in tparams.iteritems():
         if ignore != None and ignore in kk:
             continue
-        print kk
+        print
+        kk
         l.append(vv)
     return l
 
@@ -68,10 +72,12 @@ def init_tparams(params):
         tparams[kk] = theano.shared(params[kk], name=kk)
     return tparams
 
+
 def init_tparams_value(params):
     tparams = OrderedDict()
     for kk, pp in params.iteritems():
-        print kk
+        print
+        kk
         if kk == 'hout':
             pass
         tparams[kk] = theano.shared(params[kk], name=kk)
@@ -88,6 +94,7 @@ def load_params(path, params):
         params[kk] = pp[kk]
 
     return params
+
 
 def get_layer(name):
     fns = layers[name]
@@ -114,11 +121,14 @@ def norm_weight(nin, nout=None, scale=0.01, ortho=True):
 def tanh(x):
     return tensor.tanh(x)
 
+
 def sigmoid(x):
     return tensor.nnet.tanh(x)
 
+
 def linear(x):
     return x
+
 
 def param_init_fflayer(params, prefix='ff', nin=None, nout=None,
                        ortho=True):
@@ -127,9 +137,8 @@ def param_init_fflayer(params, prefix='ff', nin=None, nout=None,
 
     return params
 
+
 def param_init_gru(params, prefix='gru', nin=None, dim=None):
-
-
     W = numpy.concatenate([norm_weight(nin, dim),
                            norm_weight(nin, dim)], axis=1)
     params[_p(prefix, 'W')] = W
@@ -167,14 +176,14 @@ def gru_layer(tparams, state_below, prefix='gru', mask=None):
     # utility function to slice a tensor
     def _slice(_x, n, dim):
         if _x.ndim == 3:
-            return _x[:, :, n*dim:(n+1)*dim]
-        return _x[:, n*dim:(n+1)*dim]
+            return _x[:, :, n * dim:(n + 1) * dim]
+        return _x[:, n * dim:(n + 1) * dim]
 
     state_below_ = tensor.dot(state_below, tparams[_p(prefix, 'W')]) + \
-        tparams[_p(prefix, 'b')]
+                   tparams[_p(prefix, 'b')]
     # input to compute the hidden state proposal
     state_belowx = tensor.dot(state_below, tparams[_p(prefix, 'Wx')]) + \
-        tparams[_p(prefix, 'bx')]
+                   tparams[_p(prefix, 'bx')]
 
     # step function to be used by scan
     # arguments    | sequences |outputs-info| non-seqs
@@ -217,11 +226,13 @@ def gru_layer(tparams, state_below, prefix='gru', mask=None):
     # rval = [rval]
     return rval
 
+
 def fflayer(tparams, state_below, prefix='rconv',
             activ='lambda x: tensor.tanh(x)', **kwargs):
     return eval(activ)(
         tensor.dot(state_below, tparams[_p(prefix, 'W')]) +
         tparams[_p(prefix, 'b')])
+
 
 def rmsprop(tparams, grads, inp, cost):
     zipped_grads = [theano.shared(p.get_value() * numpy.float32(0.),
@@ -252,7 +263,8 @@ def rmsprop(tparams, grads, inp, cost):
     # f_update = theano.function([], [], updates=updir_new+param_up,
     #                            on_unused_input='ignore')
 
-    return updir_new+param_up
+    return updir_new + param_up
+
 
 def RMSprop(cost, params, lr=0.0001, rho=0.999, epsilon=1e-8):
     grads = tensor.grad(cost=cost, wrt=params)
@@ -266,15 +278,14 @@ def RMSprop(cost, params, lr=0.0001, rho=0.999, epsilon=1e-8):
         updates.append((p, p - lr * g))
     return updates
 
-def adam(cost, tparams):
 
-    grads = theano.grad(cost,wrt=itemlist(tparams))
+def adam(cost, tparams):
+    grads = theano.grad(cost, wrt=itemlist(tparams))
 
     gshared = [theano.shared(p.get_value() * 0.,
                              name='%s_grad' % k)
                for k, p in tparams.iteritems()]
     gsup = [(gs, g) for gs, g in zip(gshared, grads)]
-
 
     lr0 = 0.0025
     b1 = 0.1
@@ -285,8 +296,8 @@ def adam(cost, tparams):
 
     i = theano.shared(numpy.float32(0.))
     i_t = i + 1.
-    fix1 = 1. - b1**(i_t)
-    fix2 = 1. - b2**(i_t)
+    fix1 = 1. - b1 ** (i_t)
+    fix2 = 1. - b2 ** (i_t)
     lr_t = lr0 * (tensor.sqrt(fix2) / fix1)
 
     for p, g in zip(tparams.values(), gshared):
@@ -301,24 +312,26 @@ def adam(cost, tparams):
         updates.append((p, p_t))
     updates.append((i, i_t))
 
-    return gsup+updates
+    return gsup + updates
+
 
 def clip_grad(grads, clip_c):
-
     if clip_c > 0.:
         g2 = 0.
         for g in grads:
-            g2 += (g**2).sum()
+            g2 += (g ** 2).sum()
         new_grads = []
         for g in grads:
-            new_grads.append(tensor.switch(g2 > (clip_c**2),
+            new_grads.append(tensor.switch(g2 > (clip_c ** 2),
                                            g / tensor.sqrt(g2) * clip_c,
                                            g))
         grads = new_grads
 
     return grads
 
+
 numpy.random.seed(2017)
+
 
 class ModelBasedUsersimulator:
     def __init__(self, input_size, hidden_size, action_size):
@@ -326,7 +339,7 @@ class ModelBasedUsersimulator:
 
         params = OrderedDict()
         param_init_gru(params, 'gru', input_size, hidden_size)
-        param_init_fflayer(params,'h_diaact',hidden_size, action_size)
+        param_init_fflayer(params, 'h_diaact', hidden_size, action_size)
 
         self.n_diaact = action_size
         self.param = params
@@ -338,7 +351,6 @@ class ModelBasedUsersimulator:
         s_t = tensor.tensor3('s_t', dtype='float32')
         diaact_t = tensor.matrix('diaact_t', dtype='float32')
 
-
         h = gru_layer(self.tparams, s_t, 'gru')
 
         pre_diaact = fflayer(self.tparams, h, 'h_diaact', activ='linear')
@@ -348,19 +360,18 @@ class ModelBasedUsersimulator:
         diaact_loss = -diaact_t * tensor.log(prob_diaact)
         diaact_loss = diaact_loss.mean()
 
-
         total_cost = diaact_loss
 
-        updates = RMSprop(total_cost,itemlist(self.tparams))
+        updates = RMSprop(total_cost, itemlist(self.tparams))
 
-        self.train = theano.function(inputs=[s_t, diaact_t], outputs=total_cost , allow_input_downcast=True,
+        self.train = theano.function(inputs=[s_t, diaact_t], outputs=total_cost, allow_input_downcast=True,
                                      on_unused_input='ignore', updates=updates)
 
         rng = theano.sandbox.rng_mrg.MRG_RandomStreams()
         sample_diaact = rng.multinomial(n=5, pvals=prob_diaact)
 
         self.train_sample = theano.function(inputs=[s_t, diaact_t], outputs=sample_diaact, allow_input_downcast=True,
-                                     on_unused_input='ignore')
+                                            on_unused_input='ignore')
 
         self.sample_fn = self.build_sampler()
 
@@ -388,7 +399,6 @@ class ModelBasedUsersimulator:
         # #
         # prediction = tensor.argmax(prob,axis=1)
 
-
         # updates = RMSprop(total_cost,itemlist(self.tparams, 'h_value'))
         # update_sup = RMSprop(cost_sup,itemlist(self.tparams,'h_value'))
         # update_value = RMSprop(value_loss,itemlist(self.tparams,'hout'))
@@ -397,7 +407,6 @@ class ModelBasedUsersimulator:
         # self.train = theano.function(inputs=[s_t, a_t, r], outputs=total_cost, allow_input_downcast=True,  on_unused_input='ignore', updates=updates)
         # self.train_value = theano.function(inputs=[s_t, r], outputs=value_loss, allow_input_downcast=True,  on_unused_input='ignore', updates=update_value)
         # self.predict_value = theano.function(inputs=[s_t], outputs=h_value, allow_input_downcast=True)
-
 
         # self.train_batch = theano.function(inputs=[s_t, a_t, m_t, r], outputs=total_cost, allow_input_downcast=True,  on_unused_input='ignore', updates=updates)
 
@@ -430,14 +439,14 @@ class ModelBasedUsersimulator:
         # utility function to slice a tensor
         def _slice(_x, n, dim):
             if _x.ndim == 3:
-                return _x[:, :, n*dim:(n+1)*dim]
-            return _x[:, n*dim:(n+1)*dim]
+                return _x[:, :, n * dim:(n + 1) * dim]
+            return _x[:, n * dim:(n + 1) * dim]
 
         state_below_ = tensor.dot(state_below, self.tparams[_p(prefix, 'W')]) + \
-            self.tparams[_p(prefix, 'b')]
+                       self.tparams[_p(prefix, 'b')]
         # input to compute the hidden state proposal
         state_belowx = tensor.dot(state_below, self.tparams[_p(prefix, 'Wx')]) + \
-            self.tparams[_p(prefix, 'bx')]
+                       self.tparams[_p(prefix, 'bx')]
 
         # step function to be used by scan
         # arguments    | sequences |outputs-info| non-seqs
@@ -464,7 +473,6 @@ class ModelBasedUsersimulator:
 
         # prepare scan arguments
 
-
         _step = _step_slice
         shared_vars = [self.tparams[_p(prefix, 'U')],
                        self.tparams[_p(prefix, 'Ux')]]
@@ -479,21 +487,22 @@ class ModelBasedUsersimulator:
 
         rng = theano.sandbox.rng_mrg.MRG_RandomStreams()
 
-        sampler_fn = theano.function(inputs=[s_t, h_last], outputs=[tensor.argmax(rng.multinomial(n=2, pvals=prob_diaact)), prob_slots,h],allow_input_downcast=True,  on_unused_input='ignore')
+        sampler_fn = theano.function(inputs=[s_t, h_last],
+                                     outputs=[tensor.argmax(rng.multinomial(n=2, pvals=prob_diaact)), prob_slots, h],
+                                     allow_input_downcast=True, on_unused_input='ignore')
 
         return sampler_fn
 
-
-    def singleBatch(self,inputs):
+    def singleBatch(self, inputs):
         out = {}
-        out['cost'] = {'total_cost':self.train(*inputs)}
+        out['cost'] = {'total_cost': self.train(*inputs)}
         # self.f_update()
         return out
 
     def reset_hat(self):
-        tp, tp_hat = self.tparams,self.tparams_hat
+        tp, tp_hat = self.tparams, self.tparams_hat
         for i in tp.items():
-            k,v = i
+            k, v = i
             tp_hat[k].set_value(v.get_value())
 
     def unzip(self):
@@ -501,11 +510,11 @@ class ModelBasedUsersimulator:
 
     def load(self, path):
         pp = numpy.load(path)
-        for kk,vv in self.param.items():
+        for kk, vv in self.param.items():
             if kk not in pp:
                 continue
             self.param[kk] = pp[kk]
-        self.tparams=init_tparams(self.param)
+        self.tparams = init_tparams(self.param)
 
 # class DQN:
 #

@@ -69,35 +69,35 @@ class RuleSimulator(UserSimulator):
     def _sample_action(self):
         """ randomly sample a start action based on user goal """
 
-        self.state['diaact'] = random.choice(list(dialog_config.start_dia_acts.keys())) # in this case, only 'request'
+        self.state['diaact'] = random.choice(list(dialog_config.start_dia_acts.keys()))  # in this case, only 'request'
 
         # "sample" informed slots
         if len(self.goal['inform_slots']) > 0:
             known_slot = random.choice(list(self.goal['inform_slots'].keys()))  # 从用户目标的inform slot中随机抽取一个槽
-            self.state['inform_slots'][known_slot] = self.goal['inform_slots'][known_slot] # 将其放入state中
+            self.state['inform_slots'][known_slot] = self.goal['inform_slots'][known_slot]  # 将其放入state中
 
             if 'moviename' in self.goal['inform_slots'].keys():  # 'moviename' must appear in the first user turn
                 self.state['inform_slots']['moviename'] = self.goal['inform_slots']['moviename']
 
-            for slot in self.goal['inform_slots'].keys():   # 迭代用户目标中的所有inform slots
+            for slot in self.goal['inform_slots'].keys():  # 迭代用户目标中的所有inform slots
                 if known_slot == slot or slot == 'moviename': continue  # 除了'电影名'和先前随机抽取的known_slot之外的所有slot
-                self.state['rest_slots'].append(slot)   # 都放入state的rest slot之中
+                self.state['rest_slots'].append(slot)  # 都放入state的rest slot之中
 
         self.state['rest_slots'].extend(self.goal['request_slots'].keys())  # 且把request slot追加进rest slot列表中
 
         # "sample" a requested slot
         request_slot_set = list(self.goal['request_slots'].keys())
-        request_slot_set.remove('ticket')   # 在__init__中已将'用户目标'中的ticket设为UNK
+        request_slot_set.remove('ticket')  # 在__init__中已将'用户目标'中的ticket设为UNK
         if len(request_slot_set) > 0:
             request_slot = random.choice(request_slot_set)
-        else:   #  len(request_slot_set) = 0的情况，表示用户目标中没有请求
+        else:  # len(request_slot_set) = 0的情况，表示用户目标中没有请求
             request_slot = 'ticket'
-        self.state['request_slots'][request_slot] = 'UNK'   # 把'用户状态'中抽取到的request slot设为UNK，若用户目标中没有请求，则把ticket设为UNK
+        self.state['request_slots'][request_slot] = 'UNK'  # 把'用户状态'中抽取到的request slot设为UNK，若用户目标中没有请求，则把ticket设为UNK
 
-        if len(self.state['request_slots']) == 0:   # 若当前状态无请求，则把用户动作改为告知
+        if len(self.state['request_slots']) == 0:  # 若当前状态无请求，则把用户动作改为告知
             self.state['diaact'] = 'inform'
 
-        if (self.state['diaact'] in ['thanks', 'closing']): # 若当前状态下对话动作为感谢/关闭
+        if (self.state['diaact'] in ['thanks', 'closing']):  # 若当前状态下对话动作为感谢/关闭
             self.episode_over = True  # episode_over = True
         else:
             self.episode_over = False  # episode_over = False
@@ -176,17 +176,17 @@ class RuleSimulator(UserSimulator):
         self.episode_over = False
         self.dialog_status = dialog_config.NO_OUTCOME_YET
 
-        sys_act = system_action['diaact']   # agent action
+        sys_act = system_action['diaact']  # agent action
 
         # print sys_act
         if (self.max_turn > 0 and self.state['turn'] > self.max_turn):  # 若设定了最大对话轮数，且当前超过了对话最大轮数。
-            self.dialog_status = dialog_config.FAILED_DIALOG    # 更新config中的对话状态
-            self.episode_over = True    # 将对话结束的flag设为true
+            self.dialog_status = dialog_config.FAILED_DIALOG  # 更新config中的对话状态
+            self.episode_over = True  # 将对话结束的flag设为true
             self.state['request_slots'].clear()
             self.state['inform_slots'].clear()
-            self.state['diaact'] = "closing"    # 清空槽，把对话状态设为关闭
+            self.state['diaact'] = "closing"  # 清空槽，把对话状态设为关闭
         else:
-            self.state['history_slots'].update(self.state['inform_slots']) # 往history_slot中更新inform_slot的内容
+            self.state['history_slots'].update(self.state['inform_slots'])  # 往history_slot中更新inform_slot的内容
             self.state['inform_slots'].clear()
 
             # 根据不同的智能体动作，做出相应的回复
@@ -205,11 +205,11 @@ class RuleSimulator(UserSimulator):
                 self.state['diaact'] = "thanks"
                 self.state['request_slots'].clear()
 
-        if self.state['diaact'] == "thanks":    # 若对话动作为致谢，同样也清空槽
+        if self.state['diaact'] == "thanks":  # 若对话动作为致谢，同样也清空槽
             self.state['request_slots'].clear()
             self.state['inform_slots'].clear()
 
-        self.corrupt(self.state)    # 模拟NLU NLG模块的error
+        self.corrupt(self.state)  # 模拟NLU NLG模块的error
 
         response_action = {}
         response_action['diaact'] = self.state['diaact']

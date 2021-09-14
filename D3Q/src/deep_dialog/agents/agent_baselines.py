@@ -22,7 +22,7 @@ class InformAgent(Agent):
 
     def state_to_action(self, state):
         """ Run current policy on state and produce an action """
-        
+
         self.state['turn'] += 2
         if self.current_slot_id < len(self.slot_set.keys()):
             slot = self.slot_set.keys()[self.current_slot_id]
@@ -34,14 +34,14 @@ class InformAgent(Agent):
             act_slot_response['request_slots'] = {}
             act_slot_response['turn'] = self.state['turn']
         else:
-            act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {}, 'turn': self.state['turn']}
+            act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {},
+                                 'turn': self.state['turn']}
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
-
 
 
 class RequestAllAgent(Agent):
     """ A simple agent to test the system. This agent should simply request all the slots and then issue: thanks(). """
-    
+
     def initialize_episode(self):
         self.state = {}
         self.state['diaact'] = ''
@@ -52,7 +52,7 @@ class RequestAllAgent(Agent):
 
     def state_to_action(self, state):
         """ Run current policy on state and produce an action """
-        
+
         self.state['turn'] += 2
         if self.current_slot_id < len(dialog_config.sys_request_slots):
             slot = dialog_config.sys_request_slots[self.current_slot_id]
@@ -64,9 +64,9 @@ class RequestAllAgent(Agent):
             act_slot_response['request_slots'] = {slot: "PLACEHOLDER"}
             act_slot_response['turn'] = self.state['turn']
         else:
-            act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {}, 'turn': self.state['turn']}
+            act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {},
+                                 'turn': self.state['turn']}
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
-
 
 
 class RandomAgent(Agent):
@@ -79,15 +79,13 @@ class RandomAgent(Agent):
         self.state['request_slots'] = {}
         self.state['turn'] = -1
 
-
     def state_to_action(self, state):
         """ Run current policy on state and produce an action """
-        
+
         self.state['turn'] += 2
         act_slot_response = copy.deepcopy(random.choice(dialog_config.feasible_actions))
         act_slot_response['turn'] = self.state['turn']
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
-
 
 
 class EchoAgent(Agent):
@@ -100,11 +98,10 @@ class EchoAgent(Agent):
         self.state['request_slots'] = {}
         self.state['turn'] = -1
 
-
     def state_to_action(self, state):
         """ Run current policy on state and produce an action """
         user_action = state['user_action']
-        
+
         self.state['turn'] += 2
         act_slot_response = {}
         act_slot_response['inform_slots'] = {}
@@ -127,7 +124,7 @@ class EchoAgent(Agent):
 
 class RequestBasicsAgent(Agent):
     """ A simple agent to test the system. This agent should simply request all the basic slots and then issue: thanks(). """
-    
+
     def initialize_episode(self):
         self.state = {}
         self.state['diaact'] = 'UNK'
@@ -140,7 +137,7 @@ class RequestBasicsAgent(Agent):
 
     def state_to_action(self, state):
         """ Run current policy on state and produce an action """
-        
+
         self.state['turn'] += 2
         if self.current_slot_id < len(self.request_set):
             slot = self.request_set[self.current_slot_id]
@@ -152,11 +149,12 @@ class RequestBasicsAgent(Agent):
             act_slot_response['request_slots'] = {slot: "UNK"}
             act_slot_response['turn'] = self.state['turn']
         elif self.phase == 0:
-            act_slot_response = {'diaact': "inform", 'inform_slots': {'taskcomplete': "PLACEHOLDER"}, 'request_slots': {}, 'turn':self.state['turn']}
+            act_slot_response = {'diaact': "inform", 'inform_slots': {'taskcomplete': "PLACEHOLDER"},
+                                 'request_slots': {}, 'turn': self.state['turn']}
             self.phase += 1
         elif self.phase == 1:
-            act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {}, 'turn': self.state['turn']}
+            act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {},
+                                 'turn': self.state['turn']}
         else:
             raise Exception("THIS SHOULD NOT BE POSSIBLE (AGENT CALLED IN UNANTICIPATED WAY)")
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
-

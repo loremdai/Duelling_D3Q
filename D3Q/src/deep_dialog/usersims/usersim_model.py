@@ -161,7 +161,7 @@ class ModelBasedSimulator(UserSimulator):
         self.total_loss_for_ge = 0
         dis_idx = 0
 
-        for iter_batch in range(num_batches):   # 训练次数
+        for iter_batch in range(num_batches):  # 训练次数
             for iter in range(len(self.training_examples) // (batch_size)):
                 batch = [random.choice(list(self.training_examples)) for _ in range(batch_size)]
                 np_batch = []
@@ -178,7 +178,7 @@ class ModelBasedSimulator(UserSimulator):
                 float(self.total_loss) / (float(len(self.training_examples)) / float(batch_size)),
                 len(self.training_examples)))
             # NOTE: num_batches == 1
-            return float(self.total_loss) / (float(len(self.training_examples)) / float(batch_size))    # 返回total cost
+            return float(self.total_loss) / (float(len(self.training_examples)) / float(batch_size))  # 返回total cost
 
     def train_iter(self, batch_size=1, num_batches=1):
         self.total_loss = 0
@@ -219,8 +219,8 @@ class ModelBasedSimulator(UserSimulator):
         if running_dialog:
             self.state['turn'] += 2
 
-            if (self.max_turn > 0 and self.state['turn'] >= self.max_turn): # 若设定了最大对话轮数，且当前超过了对话最大轮数。
-                reward = - self.max_turn    # 施加惩罚
+            if (self.max_turn > 0 and self.state['turn'] >= self.max_turn):  # 若设定了最大对话轮数，且当前超过了对话最大轮数。
+                reward = - self.max_turn  # 施加惩罚
                 term = True
                 self.state['request_slots'].clear()
                 self.state['inform_slots'].clear()
@@ -245,7 +245,7 @@ class ModelBasedSimulator(UserSimulator):
                 if slots in self.sample_goal['inform_slots'].keys():
                     action['inform_slots'][slots] = self.sample_goal['inform_slots'][slots]
                 else:
-                    action['inform_slots'][slots] = dialog_config.I_DO_NOT_CARE     # 用户告知智能体对这一问题无所谓
+                    action['inform_slots'][slots] = dialog_config.I_DO_NOT_CARE  # 用户告知智能体对这一问题无所谓
         response_action = action
 
         term = term[0][0] > 0.5

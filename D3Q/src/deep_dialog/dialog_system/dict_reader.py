@@ -7,7 +7,7 @@ Created on May 18, 2016
 
 def text_to_dict(path):
     """ Read in a text file as a dictionary where keys are text and values are indices (line numbers) """
-    
+
     slot_set = {}
     with open(path, 'r') as f:
         index = 0

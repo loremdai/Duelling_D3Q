@@ -14,6 +14,7 @@ from deep_dialog import dialog_config
 from deep_dialog.nlu import nlu
 from deep_dialog.nlg import nlg
 
+
 # <editor-fold desc="用于读取文件的辅助函数">
 def convertFile(originPath):
     origin_str = os.path.splitext(originPath)
@@ -28,6 +29,8 @@ def convertFile(originPath):
                 output.write(line + str.encode('\n'))
     print("successfully! ")
     return destiPath
+
+
 # </editor-fold>
 
 # <editor-fold desc="总参数设置">
@@ -465,6 +468,7 @@ def warm_start_simulation():
     # 打印当前回放缓存大小
     print("Current experience replay buffer size %s" % (len(agent.experience_replay_pool)))
 
+
 # 直接载入预先得到的回放缓存经验
 def warm_start_simulation_preload():
     successes = 0
@@ -647,7 +651,7 @@ def simulation_ddq():
 
 
 def simulation_d3q():
-    res = {}    # 记录D3Q的成功率、平均奖励、平均对话轮数
+    res = {}  # 记录D3Q的成功率、平均奖励、平均对话轮数
     successes = 0
     cumulative_reward = 0
     cumulative_turns = 0
@@ -728,7 +732,6 @@ def simulation_d3q():
 
                 cumulative_turns += dialog_manager.state_tracker.turn_count
 
-
     total_simulation_count += simulation_count  # total_simulation_count中记录了2个阶段总的simulation_count
     res['success_rate'] = float(successes) / total_simulation_count
     res['ave_reward'] = float(cumulative_reward) / total_simulation_count
@@ -737,9 +740,11 @@ def simulation_d3q():
         res['success_rate'], res['ave_reward'], res['ave_turns']))
     return res  # 返回含统计结果的字典
 
+
 # </editor-fold>
 
 status = {'successes': 0, 'count': 0, 'cumulative_reward': 0}
+
 
 def run_episodes(count, status):
     successes = 0
@@ -777,7 +782,7 @@ def run_episodes(count, status):
         # 每轮episode结束后更新网络
         agent.duelling_dqn.update_network()
 
-        print("Episode: %s" % (episode))    # 打印当前episode
+        print("Episode: %s" % (episode))  # 打印当前episode
         agent.predict_mode = False
         dialog_manager.initialize_episode(True)  # 不使用世界模型
         episode_over = False
@@ -878,7 +883,6 @@ def run_episodes(count, status):
             float(cumulative_reward) / (episode + 1),
             float(cumulative_turns) / (episode + 1)))
 
-
     # 打印总循环结束后的评价指标
     print("Success rate: %s / %s Avg reward: %.2f Avg turns: %.2f" % (
         successes,
@@ -894,5 +898,6 @@ def run_episodes(count, status):
         agent.save_duelling_dqn(path)
     if agt == 10 and params['trained_model_path'] == None:  # 若agt=10且处于训练模式，追加保存性能记录
         save_performance_records(params['write_model_dir'], agt, performance_records)
+
 
 run_episodes(num_episodes, status)

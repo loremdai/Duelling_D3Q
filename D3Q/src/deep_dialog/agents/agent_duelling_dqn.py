@@ -18,7 +18,7 @@ import numpy as np
 
 from deep_dialog import dialog_config
 from .agent import Agent
-from deep_dialog.qlearning import DuellingDQN   # import的是pytorch版本的DQN
+from deep_dialog.qlearning import DuellingDQN  # import的是pytorch版本的DQN
 
 
 class AgentDuellingDQN(Agent):
@@ -27,11 +27,11 @@ class AgentDuellingDQN(Agent):
         self.act_set = act_set
         self.slot_set = slot_set
         self.act_cardinality = len(act_set.keys())  # 动作集合的大小
-        self.slot_cardinality = len(slot_set.keys())    # 槽集合的大小
+        self.slot_cardinality = len(slot_set.keys())  # 槽集合的大小
 
         self.feasible_actions = dialog_config.feasible_actions
         self.num_actions = len(self.feasible_actions)
-        self.available_actions = range(self.num_actions)    # [0,1,2,...,num_actions]
+        self.available_actions = range(self.num_actions)  # [0,1,2,...,num_actions]
         self.new_actions = range(self.num_actions)  # [0,1,2,...,num_actions]
 
         self.agent_run_mode = params['agent_run_mode']
@@ -52,7 +52,8 @@ class AgentDuellingDQN(Agent):
         if self.refine_state:
             self.state_dimension = 213
 
-        self.duelling_dqn = DuellingDQN(self.state_dimension, self.hidden_size, self.num_actions)    # input_size, hidden_size(80), output_size
+        self.duelling_dqn = DuellingDQN(self.state_dimension, self.hidden_size,
+                                        self.num_actions)  # input_size, hidden_size(80), output_size
         self.clone_dqn = copy.deepcopy(self.duelling_dqn)
 
         self.predict_mode = params.get('predict_mode', False)
@@ -102,7 +103,7 @@ class AgentDuellingDQN(Agent):
         """ DQN: Input state, output action """
         self.representation = self.prepare_state_representation(state)  # 将状态转换成可输入的状态表示
         self.action = self.run_policy(self.representation)  # 基于状态表示，根据epsilon-greedy策略得到动作
-        act_slot_response = copy.deepcopy(self.feasible_actions[self.action])   # 根据动作填槽
+        act_slot_response = copy.deepcopy(self.feasible_actions[self.action])  # 根据动作填槽
         return {'act_slot_response': act_slot_response, 'act_slot_value_response': None}
 
     def prepare_state_representation(self, state):
@@ -237,7 +238,6 @@ class AgentDuellingDQN(Agent):
                 np.argmax(self.duelling_dqn.predict(representation)[self.available_actions])
             ]
 
-
     # 规则策略
     def rule_policy(self):
         """ Rule Policy """
@@ -262,38 +262,38 @@ class AgentDuellingDQN(Agent):
         elif self.phase == 1:
             act_slot_response = {'diaact': "thanks", 'inform_slots': {}, 'request_slots': {}}
 
-        return self.action_index(act_slot_response) # 返回动作所对应的索引
+        return self.action_index(act_slot_response)  # 返回动作所对应的索引
 
     # 返回给定动作所对应的索引（被函数rule_policy调用）
     def action_index(self, act_slot_response):
         """ Return the index of action """
 
-        for (i, action) in enumerate(self.feasible_actions):    # 在self.feasible_actions中查找动作
-            if act_slot_response == action: # 若动作吻合则返回对应的索引
+        for (i, action) in enumerate(self.feasible_actions):  # 在self.feasible_actions中查找动作
+            if act_slot_response == action:  # 若动作吻合则返回对应的索引
                 return i
-        print(act_slot_response)    # 打印该动作
-        raise Exception("action index not found")   # 查找不到则抛出异常，返回None
+        print(act_slot_response)  # 打印该动作
+        raise Exception("action index not found")  # 查找不到则抛出异常，返回None
         return None
 
     # 将经验放进回放缓存池（该函数在DM模块中被调用）
     def register_experience_replay_tuple(self, s_t, a_t, reward, s_tplus1, episode_over, st_user, from_model=False):
         """ Register feedback from the environment, to be stored as future training data """
 
-        state_t_rep = self.prepare_state_representation(s_t)    # 对当前状态进行表示
+        state_t_rep = self.prepare_state_representation(s_t)  # 对当前状态进行表示
         action_t = self.action
         reward_t = reward
         state_tplus1_rep = self.prepare_state_representation(s_tplus1)  # 对下一时间步的状态进行表示
-        st_user = self.prepare_state_representation(s_tplus1)   # 对用户状态进行表示
+        st_user = self.prepare_state_representation(s_tplus1)  # 对用户状态进行表示
         training_example = (state_t_rep, action_t, reward_t, state_tplus1_rep, episode_over, st_user)
 
         # 根据训练/预测模式、来自世界模型与否，相应的存放经验
         if self.predict_mode == False:  # 训练模式
-            if self.warm_start == 1:    # 只有在热启动阶段才把经验放入回放缓存池
+            if self.warm_start == 1:  # 只有在热启动阶段才把经验放入回放缓存池
                 self.experience_replay_pool.append(training_example)
         else:  # 预测模式
             if not from_model:  # 真实经验
                 self.experience_replay_pool.append(training_example)
-            else:   # 模拟经验（来自于世界模型）
+            else:  # 模拟经验（来自于世界模型）
                 self.experience_replay_pool_from_model.append(training_example)
 
         # 若溢出，则保留最新经验
@@ -312,16 +312,17 @@ class AgentDuellingDQN(Agent):
         running_expereince_pool = self.experience_replay_pool + self.experience_replay_pool_from_model  # 总经验池
 
         for iter in range(num_iter):
-            for _ in range(len(running_expereince_pool) // (batch_size)):   # 迭代batch数量次
+            for _ in range(len(running_expereince_pool) // (batch_size)):  # 迭代batch数量次
 
-                batch = [random.choice(running_expereince_pool) for _ in range(batch_size)] # 从总经验池中随机挑出batch_size个经验
-                np_batch = []   # each example in a batch: [s, a, r, s_prime, term]，大小为(5,16)
+                batch = [random.choice(running_expereince_pool) for _ in range(batch_size)]  # 从总经验池中随机挑出batch_size个经验
+                np_batch = []  # each example in a batch: [s, a, r, s_prime, term]，大小为(5,16)
                 for x in range(5):
                     v = []
-                    for i in range(len(batch)): # 内循环16次，外循环5次
-                        v.append(batch[i][x])   # 纵向抽取16条经验中的每一个属性放入到v[]中
-                    np_batch.append(np.vstack(v))   # np_batch列表中的每一个元素为经验五元组中的一个项，如s、a、r、s_prime、term；其中列表元素（如np_batch[0]为状态s）的大小为(16,1)，
-                self.duelling_dqn.singleBatch(np_batch)   # 调用Duelling DQN进行训练
+                    for i in range(len(batch)):  # 内循环16次，外循环5次
+                        v.append(batch[i][x])  # 纵向抽取16条经验中的每一个属性放入到v[]中
+                    np_batch.append(np.vstack(
+                        v))  # np_batch列表中的每一个元素为经验五元组中的一个项，如s、a、r、s_prime、term；其中列表元素（如np_batch[0]为状态s）的大小为(16,1)，
+                self.duelling_dqn.singleBatch(np_batch)  # 调用Duelling DQN进行训练
 
             if len(self.experience_replay_pool) != 0:
                 print(
@@ -354,7 +355,6 @@ class AgentDuellingDQN(Agent):
 
     def set_user_planning(self, user_planning):
         self.user_planning = user_planning
-
 
     ################################################################################
     #    Debug Functions

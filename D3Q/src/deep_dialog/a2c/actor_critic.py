@@ -84,7 +84,8 @@ class A2C(nn.Module):
         v = self.value(s)  # size: (16,1)
         v_prime = self.target_value(s_prime)  # size: (16,1)
 
-        td_error = torch.squeeze(r.squeeze_(0) + torch.mul(v_prime, self.gamma) - v, dim=1)   # r.squeeze_(0) (16,1)  td_error size: (16,1)--> (16)
+        td_error = torch.squeeze(r.squeeze_(0) + torch.mul(v_prime, self.gamma) - v,
+                                 dim=1)  # r.squeeze_(0) (16,1)  td_error size: (16,1)--> (16)
         value_loss = td_error.pow(2).sum()
         value_loss.backward()
         clip_grad_norm_(self.value.parameters(), self.max_norm)

@@ -58,7 +58,7 @@ class AgentA2C(Agent):
 
         # replay buffer settings
         self.model_type = params['model_type']  # DQN DDQ D3Q
-        self.size_unit = params['buffer_size_unit']     # 2000
+        self.size_unit = params['buffer_size_unit']  # 2000
         self.planning_steps = params['planning_steps']
         # the replay buffer size also follow the planning step concept?
         if params['planning_step_to_buffer']:
@@ -249,7 +249,7 @@ class AgentA2C(Agent):
         return None
 
     # 给定的action索引，转为one-hot向量
-    def to_onehot(self,action):
+    def to_onehot(self, action):
         one_hot_action = [int(k == action) for k in range(self.num_actions)]
         return one_hot_action
 
@@ -258,7 +258,7 @@ class AgentA2C(Agent):
         """ Register feedback from the environment, to be stored as future training data """
 
         state_t_rep = self.prepare_state_representation(s_t)  # 对当前状态进行表示
-        #action_t = self.to_onehot(self.action)
+        # action_t = self.to_onehot(self.action)
         action_t = self.action
         reward_t = reward
         state_tplus1_rep = self.prepare_state_representation(s_tplus1)  # 对下一时间步的状态进行表示
@@ -293,7 +293,7 @@ class AgentA2C(Agent):
         for iter in range(num_iter):
             for _ in range(len(running_expereince_pool) // (batch_size)):  # 迭代num_batch次 (28)
                 batch = [random.choice(running_expereince_pool) for _ in range(batch_size)]
-                #batch = [running_expereince_pool[i] for i in range(batch_size)] # 从总经验池中随机选出batch_size笔经验 （16）
+                # batch = [running_expereince_pool[i] for i in range(batch_size)] # 从总经验池中随机选出batch_size笔经验 （16）
                 np_batch = []
                 for x in range(5):  # 注意此处无user_state
                     v = []
@@ -309,7 +309,6 @@ class AgentA2C(Agent):
                         len(self.experience_replay_pool),
                         len(self.experience_replay_pool_from_model),
                         self.cur_bellman_err_planning))
-
 
     ################################################################################
     #    Debug Functions

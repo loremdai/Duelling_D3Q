@@ -74,7 +74,6 @@ feasible_actions = [
     {'diaact': "deny", 'inform_slots': {}, 'request_slots': {}},
 ]
 
-
 ##############################
 # Full domain
 ##############################
@@ -142,7 +141,6 @@ sys_request_slots = [
     'theater_chain',
     'price'
 ]
-
 
 for slot in sys_inform_slots:
     feasible_actions.append({'diaact': 'inform', 'inform_slots': {slot: "PLACEHOLDER"}, 'request_slots': {}})

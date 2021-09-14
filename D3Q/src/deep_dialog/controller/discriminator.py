@@ -13,8 +13,10 @@ from deep_dialog import dialog_config
 
 use_cuda = torch.cuda.is_available()
 
+
 class Discriminator(nn.Module):
-    def __init__(self, input_size=100, hidden_size=128, output_size=1, nn_type="MLP", movie_dict=None, act_set=None, slot_set=None, start_set=None, params=None):
+    def __init__(self, input_size=100, hidden_size=128, output_size=1, nn_type="MLP", movie_dict=None, act_set=None,
+                 slot_set=None, start_set=None, params=None):
         super(Discriminator, self).__init__()
 
         #############################
@@ -47,7 +49,8 @@ class Discriminator(nn.Module):
         # (1) MLP discriminator (2) RNN discriminator
         # (3) RNN encoder -> MLP discriminator
         if nn_type == "MLP":
-            self.model = nn.Sequential(nn.Linear(self.state_dimension, hidden_size), nn.ELU(), nn.Linear(hidden_size, output_size), nn.Sigmoid())
+            self.model = nn.Sequential(nn.Linear(self.state_dimension, hidden_size), nn.ELU(),
+                                       nn.Linear(hidden_size, output_size), nn.Sigmoid())
         elif nn_type == "RNN":
             self.transform_layer = nn.Linear(self.cell_state_dimension, hidden_size)
             self.model = nn.LSTM(126, hidden_size, 1, dropout=0.00, bidirectional=False)
@@ -69,7 +72,7 @@ class Discriminator(nn.Module):
             params.extend(list(self.transform_layer.parameters()))
             params.extend(list(self.model.parameters()))
             params.extend(list(self.output_layer.parameters()))
-            self.optimizer = optim.RMSprop(params, lr=lr)   # 对3层layer的参数进行优化。
+            self.optimizer = optim.RMSprop(params, lr=lr)  # 对3层layer的参数进行优化。
 
         if use_cuda:
             self.cuda()
@@ -77,7 +80,7 @@ class Discriminator(nn.Module):
     # 存储来自世界模型的模拟经验
     def store_user_model_experience(self, experience):
         self.user_model_experience_pool.append(experience)
-        if len(self.user_model_experience_pool) > 10000:    # 当经验池满时，保留最新经验
+        if len(self.user_model_experience_pool) > 10000:  # 当经验池满时，保留最新经验
             self.user_model_experience_pool = self.user_model_experience_pool[-9000:]
 
     def store_user_experience(self, experience):
@@ -94,7 +97,8 @@ class Discriminator(nn.Module):
             # define the policy here
             d = [self.discriminate(exp).data.cpu().numpy()[0] for exp in experience]
             # NOTE: be careful
-            if np.mean(d) < self.threshold_upperbound and np.mean(d) > self.threshold_lowerbound:   # 若discriminate函数的输出处于上下界之间
+            if np.mean(d) < self.threshold_upperbound and np.mean(
+                    d) > self.threshold_lowerbound:  # 若discriminate函数的输出处于上下界之间
                 return True
             else:
                 return False
@@ -117,11 +121,12 @@ class Discriminator(nn.Module):
 
     def discriminate(self, example):
         if self.nn_type == "MLP":
-            state = self.prepare_state_representation(example[0])[0]    # represent the state
-            model_input = self.Variable(torch.FloatTensor(state))   # load state representation into pytorch Variable
+            state = self.prepare_state_representation(example[0])[0]  # represent the state
+            model_input = self.Variable(torch.FloatTensor(state))  # load state representation into pytorch Variable
             return self.model(model_input)  # feed into MLP model
         elif self.nn_type == "RNN":
-            inputs = self.Variable(torch.FloatTensor([self.prepare_state_representation_for_RNN(history) for history in example[0]['history']]))
+            inputs = self.Variable(torch.FloatTensor(
+                [self.prepare_state_representation_for_RNN(history) for history in example[0]['history']]))
             h_0 = self.Variable(torch.FloatTensor(self.prepare_initial_state_for_RNN(example[0])))
             c_0 = self.Variable(torch.zeros(1, 1, self.hidden_size))
             output, hn = self.model(inputs, (self.transform_layer(h_0).unsqueeze(0), c_0))
@@ -136,22 +141,23 @@ class Discriminator(nn.Module):
         neg_experiences = random.sample(self.user_model_experience_pool, batch_size)
 
         for pos_exp, neg_exp in zip(pos_experiences, neg_experiences):
-            loss += self.BCELoss(self.discriminate(pos_exp), self.Variable(torch.ones(1,1))) + self.BCELoss(self.discriminate(neg_exp), self.Variable(torch.zeros(1,1)))
+            loss += self.BCELoss(self.discriminate(pos_exp), self.Variable(torch.ones(1, 1))) + self.BCELoss(
+                self.discriminate(neg_exp), self.Variable(torch.zeros(1, 1)))
 
         loss.backward()
         clip_grad_norm_(self.parameters(), self.max_norm)
         self.optimizer.step()
         return loss
 
-    def train(self, batch_size=16, batch_num=0):    # batch_num决定训练次数
+    def train(self, batch_size=16, batch_num=0):  # batch_num决定训练次数
         loss = 0
         if batch_num == 0:  # 若未指定batch_num
-            batch_num = min(len(self.user_experience_pool)//batch_size, len(self.user_model_experience_pool)//batch_size)
+            batch_num = min(len(self.user_experience_pool) // batch_size,
+                            len(self.user_model_experience_pool) // batch_size)
 
         for _ in range(batch_num):
             loss += self.train_single_batch(batch_size)
-        return (loss.data.cpu().numpy()/batch_num)
-
+        return (loss.data.cpu().numpy() / batch_num)
 
     def prepare_state_representation(self, state):
         """ Create the representation for each state """
@@ -219,7 +225,9 @@ class Discriminator(nn.Module):
         turn_onehot_rep = np.zeros((1, self.max_turn))
         turn_onehot_rep[0, state['turn']] = 1.0
 
-        self.final_representation = np.hstack([user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep, agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep])
+        self.final_representation = np.hstack(
+            [user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep,
+             agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep])
         return self.final_representation
 
     def prepare_initial_state_for_RNN(self, state):
@@ -286,7 +294,9 @@ class Discriminator(nn.Module):
         turn_onehot_rep = np.zeros((1, self.max_turn))
         turn_onehot_rep[0, state['turn']] = 1.0
 
-        self.final_representation = np.hstack([user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep, agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep])
+        self.final_representation = np.hstack(
+            [user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep,
+             agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep])
         return self.final_representation
 
     # {'request_slots': {'theater': 'UNK'}, 'turn': 0, 'speaker': 'user', 'inform_slots': {'numberofpeople': '3', 'moviename': '10 cloverfield lane'}, 'diaact': 'request'}
@@ -328,6 +338,7 @@ class Discriminator(nn.Module):
         turn_onehot_rep = np.zeros((1, self.max_turn))
         turn_onehot_rep[0, state['turn']] = 1.0
 
-        self.final_representation = np.hstack([user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, turn_rep, turn_onehot_rep])
+        self.final_representation = np.hstack(
+            [user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, turn_rep, turn_onehot_rep])
 
         return self.final_representation
