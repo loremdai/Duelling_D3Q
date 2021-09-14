@@ -13,7 +13,6 @@ import numpy as np
 
 use_cuda = torch.cuda.is_available()
 
-
 # class Network(nn.Module):
 #     def __init__(self, input_size, hidden_size, output_size):
 #         super(Network, self).__init__()
@@ -140,7 +139,7 @@ class DuellingDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 10
         self.target_update_period = 100
-        lr = 0.004
+        lr = 0.005
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -180,6 +179,8 @@ class DuellingDQN(nn.Module):
         # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  TD误差部分
         # td_error size: (16,1)
         # td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
+
+        # double dqn td_error
         td_error = r.squeeze_(0) + torch.mul(torch.gather(q_prime, dim=1, index=torch.argmax(q, dim=1, keepdim=True)),
                                              self.gamma) - torch.gather(q, 1, a)
 

@@ -13,7 +13,7 @@ from deep_dialog import dialog_config
 
 use_cuda = torch.cuda.is_available()
 
-
+# step two: implement GAN between discriminator and world model
 class Discriminator(nn.Module):
     def __init__(self, input_size=100, hidden_size=128, output_size=1, nn_type="MLP", movie_dict=None, act_set=None,
                  slot_set=None, start_set=None, params=None):
