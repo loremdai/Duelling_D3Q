@@ -178,7 +178,7 @@ class DuellingDQN(nn.Module):
         q_prime = self.target_model(s_prime)
 
         # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  TD误差部分
-        # td_error size: (16,1).
+        # td_error size: (16,1)
         # td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
         td_error = r.squeeze_(0) + torch.mul(torch.gather(q_prime, dim=1, index=torch.argmax(q, dim=1, keepdim=True)),
                                              self.gamma) - torch.gather(q, 1, a)
