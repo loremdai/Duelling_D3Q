@@ -137,9 +137,9 @@ class DuellingDQN(nn.Module):
         # hyper parameters
         self.gamma = 0.9
         self.reg_l2 = 1e-3
-        self.max_norm = 1
+        self.max_norm = 10
         self.target_update_period = 100
-        lr = 0.003
+        lr = 0.004
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
