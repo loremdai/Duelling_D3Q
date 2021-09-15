@@ -66,13 +66,13 @@ class Discriminator(nn.Module):
         # optimizer & loss functions
         self.BCELoss = nn.BCELoss()
         if nn_type == "MLP":
-            self.optimizer = optim.RMSprop(self.model.parameters(), lr=lr)
+            self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         elif nn_type == "RNN":
             params = []
             params.extend(list(self.transform_layer.parameters()))
             params.extend(list(self.model.parameters()))
             params.extend(list(self.output_layer.parameters()))
-            self.optimizer = optim.RMSprop(params, lr=lr)  # 对3层layer的参数进行优化。
+            self.optimizer = optim.Adam(params, lr=lr)  # 对3层layer的参数进行优化。
 
         if use_cuda:
             self.cuda()
