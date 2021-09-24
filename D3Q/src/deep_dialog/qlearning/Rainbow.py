@@ -7,29 +7,11 @@ import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
 
-use_cuda = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# class Network(nn.Module):
-#     def __init__(self, input_size, hidden_size, output_size):
-#         super(Network, self).__init__()
-#         self.feature_layer = nn.Sequential(nn.Linear(input_size, hidden_size),
-#                                            nn.ReLU())
-#         self.value_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
-#                                          nn.ReLU(),
-#                                          nn.Linear(hidden_size, 1))
-#         self.advantage_layer = nn.Sequential(nn.Linear(hidden_size, hidden_size),
-#                                              nn.ReLU(),
-#                                              nn.Linear(hidden_size, output_size))
-#
-#     def forward(self, inputs):
-#         out = self.feature_layer(inputs)
-#         value = self.value_layer(out)
-#         advantage = self.advantage_layer(out)
-#         q = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
-#         return q
 
 class NoisyLinear(nn.Module):
-    def __init__(self, input_size, output_size, std_init = 0.5):
+    def __init__(self, input_size, output_size, std_init=0.5):
         super(NoisyLinear, self).__init__()
 
         self.input_size = input_size
@@ -88,28 +70,42 @@ class NoisyLinear(nn.Module):
 
 
 class Network(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, atom_size, z):
         super(Network, self).__init__()
+
+        # init
+        self.output_size = output_size
+        self.atom_size = atom_size
+        self.z = z
+
         # common feature layer
         self.feature_layer = nn.Sequential(
             nn.Linear(input_size, hidden_size),
-            nn.ReLU()
-        )
+            nn.ReLU())
 
         # value layer
         self.value_hid_layer = NoisyLinear(hidden_size, hidden_size)
-        self.value_layer = NoisyLinear(hidden_size, 1)
+        self.value_layer = NoisyLinear(hidden_size, atom_size)
 
         # set advantage layer
         self.advantage_hid_layer = NoisyLinear(hidden_size, hidden_size)
-        self.advantage_layer = NoisyLinear(hidden_size, output_size)
+        self.advantage_layer = NoisyLinear(hidden_size, output_size * atom_size)
 
-    def forward(self, inputs):
-        feature = self.feature_layer(inputs)
-        value = self.value_layer(F.relu(self.value_hid_layer(feature)))
-        advantage = self.advantage_layer(F.relu(self.advantage_hid_layer(feature)))
-        q = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
+    def forward(self, x):
+        p = self.compute_prob(x)
+        q = torch.sum(p * self.z, dim=2)
         return q
+
+    def compute_prob(self, inputs):
+        feature = self.feature_layer(inputs)
+        value = self.value_layer(F.relu(self.value_hid_layer(feature))).view(-1, 1,
+                                                                             self.atom_size)  # size: (16,1,atom_size)
+        advantage = self.advantage_layer(F.relu(self.advantage_hid_layer(feature))).view(-1, self.output_size,
+                                                                                         self.atom_size)  # size: (16,output_size,atom_size)
+        q_atoms = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
+        prob = F.softmax(q_atoms, dim=-1)
+        prob = prob.clamp(min=1e-3)  # 防止除数为0的情况
+        return prob
 
     def reset_noise(self):
         """Reset all noisy layers."""
@@ -119,29 +115,31 @@ class Network(nn.Module):
         self.advantage_layer.reset_noise()
 
 
-class DuellingDQN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):  # (state_dimension, hidden_size, num_actions)
-        super(DuellingDQN, self).__init__()
+class Rainbow(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, v_min=0.0, v_max=200.0,
+                 atom_size=51):  # (state_dimension, hidden_size, num_actions)
+        super(Rainbow, self).__init__()
+
+        # Categorical DQN init
+        self.v_min = v_min
+        self.v_max = v_max
+        self.atom_size = atom_size
+        self.z = torch.linspace(start=self.v_min, end=self.v_max, steps=self.atom_size).to(device)
 
         # model
-        self.model = Network(input_size, hidden_size, output_size)
+        self.model = Network(input_size, hidden_size, output_size, atom_size, z=self.z).to(device)
         # target model
-        self.target_model = Network(input_size, hidden_size, output_size)
-        # first sync
-        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model = Network(input_size, hidden_size, output_size, atom_size, z=self.z).to(device)
+        self.target_model.eval()
 
         # hyper parameters
         self.gamma = 0.9
         self.reg_l2 = 1e-3
-        self.max_norm = 1
+        self.max_norm = 10
         self.target_update_period = 100
         lr = 0.001
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
-
-        # self.to(device)
-        if use_cuda:
-            self.cuda()
 
     # 更新目标网络（将model的参数载入到target_model的参数）
     def update_fixed_target_network(self):
@@ -156,7 +154,7 @@ class DuellingDQN(nn.Module):
         self.target_model.reset_noise()
 
     def Variable(self, x):
-        return Variable(x, requires_grad=False).cuda() if use_cuda else Variable(x, requires_grad=False)
+        return Variable(x, requires_grad=False).to(device)
 
     # 在AgentDuellingDQN的train/train_iter函数中被调用
     def singleBatch(self, batch):
@@ -169,25 +167,41 @@ class DuellingDQN(nn.Module):
         r = self.Variable(torch.FloatTensor([batch[2]]))  # size: (1,16,1)
         s_prime = self.Variable(torch.FloatTensor(batch[3]))  # size: (16,213)
 
-        q = self.model(s)  # size: (16,31)
-        q_prime = self.target_model(s_prime)
+        # Compute Categorical DQN loss
+        delta_z = float(self.v_max - self.v_min) / (self.atom_size - 1)
 
-        # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  TD误差部分
-        # td_error size: (16,1)
-        td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
+        with torch.no_grad():
+            next_action = self.target_model(s_prime).argmax(1)
+            next_dist = self.target_model.compute_prob(s_prime)
+            next_dist = next_dist[range(16), next_action]
 
-        # double dqn td_error
-        # td_error = r.squeeze_(0) + torch.mul(torch.gather(q_prime, dim=1, index=torch.argmax(q, dim=1, keepdim=True)),
-        #                                      self.gamma) - torch.gather(q, 1, a)
+            t_z = torch.clamp((r.squeeze_(0) + self.gamma * self.z), min=self.v_min, max=self.v_max)
+            b = (t_z - self.v_min) / delta_z
+            l = b.floor().long()
+            u = b.ceil().long()
 
-        loss += td_error.pow(2).sum()  # Loss Function是td-error的均方误差
+            offset = (torch.linspace(start=0, end=((16 - 1) * self.atom_size), steps=16).long()
+                      .unsqueeze(1).expand(16, self.atom_size).to(device))
+
+            proj_dist = torch.zeros(next_dist.size(), device=device)
+            proj_dist.view(-1).index_add_(
+                0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1)
+            )
+            proj_dist.view(-1).index_add_(
+                0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1)
+            )
+
+        dist = self.model.compute_prob(s)
+        log_p = torch.log(dist[range(16), next_action])
+        loss = -(proj_dist * log_p).sum(1).mean()
+
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
-        return self.model(inputs).cpu().data.numpy()[0]
+        return self.model(inputs).to(device).data.numpy()[0]
 
     ################################################################################
     #    Debug Functions
