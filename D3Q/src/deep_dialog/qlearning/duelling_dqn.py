@@ -7,7 +7,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
 
-use_cuda = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # class Network(nn.Module):
 #     def __init__(self, input_size, hidden_size, output_size):
@@ -90,17 +90,17 @@ class NoisyLinear(nn.Module):
 class Network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(Network, self).__init__()
+
         # common feature layer
         self.feature_layer = nn.Sequential(
             nn.Linear(input_size, hidden_size),
-            nn.ReLU()
-        )
+            nn.ReLU())
 
         # value layer
         self.value_hid_layer = NoisyLinear(hidden_size, hidden_size)
         self.value_layer = NoisyLinear(hidden_size, 1)
 
-        # set advantage layer
+        # advantage layer
         self.advantage_hid_layer = NoisyLinear(hidden_size, hidden_size)
         self.advantage_layer = NoisyLinear(hidden_size, output_size)
 
@@ -124,28 +124,21 @@ class DuellingDQN(nn.Module):
         super(DuellingDQN, self).__init__()
 
         # model
-        self.model = Network(input_size, hidden_size, output_size)
+        self.model = Network(input_size, hidden_size, output_size).to(device)
         # target model
-        self.target_model = Network(input_size, hidden_size, output_size)
+        self.target_model = Network(input_size, hidden_size, output_size).to(device)
         # first sync
         self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model.eval()
 
         # hyper parameters
         self.gamma = 0.9
         self.reg_l2 = 1e-3
-        self.max_norm = 1
+        self.max_norm = 10
         self.target_update_period = 100
         lr = 0.001
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
-
-        # self.to(device)
-        if use_cuda:
-            self.cuda()
-
-    # 更新目标网络（将model的参数载入到target_model的参数）
-    def update_fixed_target_network(self):
-        self.target_model.load_state_dict(self.model.state_dict())
 
     # 更新网络
     def update_network(self):
@@ -156,7 +149,7 @@ class DuellingDQN(nn.Module):
         self.target_model.reset_noise()
 
     def Variable(self, x):
-        return Variable(x, requires_grad=False).cuda() if use_cuda else Variable(x, requires_grad=False)
+        return Variable(x, requires_grad=False).to(device)
 
     # 在AgentDuellingDQN的train/train_iter函数中被调用
     def singleBatch(self, batch):
@@ -187,7 +180,9 @@ class DuellingDQN(nn.Module):
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
-        return self.model(inputs).cpu().data.numpy()[0]
+        a = self.model(inputs).to(device)
+        a = a.detach().cpu().data.numpy()[0]
+        return a
 
     ################################################################################
     #    Debug Functions

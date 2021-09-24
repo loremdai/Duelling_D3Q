@@ -130,6 +130,8 @@ class Rainbow(nn.Module):
         self.model = Network(input_size, hidden_size, output_size, atom_size, z=self.z).to(device)
         # target model
         self.target_model = Network(input_size, hidden_size, output_size, atom_size, z=self.z).to(device)
+        # first sync
+        self.target_model.load_state_dict(self.model.state_dict())
         self.target_model.eval()
 
         # hyper parameters
@@ -201,7 +203,9 @@ class Rainbow(nn.Module):
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
-        return self.model(inputs).to(device).data.numpy()[0]
+        a = self.model(inputs).to(device)
+        a = a.detach().cpu().data.numpy()[0]
+        return a
 
     ################################################################################
     #    Debug Functions
