@@ -73,7 +73,7 @@ class Network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, atom_size, z):
         super(Network, self).__init__()
 
-        # init
+        # Categorical DQN init
         self.output_size = output_size
         self.atom_size = atom_size
         self.z = z
@@ -87,7 +87,7 @@ class Network(nn.Module):
         self.value_hid_layer = NoisyLinear(hidden_size, hidden_size)
         self.value_layer = NoisyLinear(hidden_size, atom_size)
 
-        # set advantage layer
+        # advantage layer
         self.advantage_hid_layer = NoisyLinear(hidden_size, hidden_size)
         self.advantage_layer = NoisyLinear(hidden_size, output_size * atom_size)
 
@@ -156,7 +156,7 @@ class Rainbow(nn.Module):
     def Variable(self, x):
         return Variable(x, requires_grad=False).to(device)
 
-    # 在AgentDuellingDQN的train/train_iter函数中被调用
+    # 在文件AgentDQN的train/train_iter函数中被调用
     def singleBatch(self, batch):
         self.optimizer.zero_grad()
         loss = 0

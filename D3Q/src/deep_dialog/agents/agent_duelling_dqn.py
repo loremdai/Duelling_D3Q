@@ -53,8 +53,8 @@ class AgentDuellingDQN(Agent):
         if self.refine_state:
             self.state_dimension = 213
 
-        self.duelling_dqn = DuellingDQN(self.state_dimension, self.hidden_size, self.num_actions)
-        # self.duelling_dqn = Rainbow(self.state_dimension, self.hidden_size, self.num_actions)
+        # self.duelling_dqn = DuellingDQN(self.state_dimension, self.hidden_size, self.num_actions)
+        self.duelling_dqn = Rainbow(self.state_dimension, self.hidden_size, self.num_actions)
         self.clone_dqn = copy.deepcopy(self.duelling_dqn)
 
         self.predict_mode = params.get('predict_mode', False)
