@@ -199,7 +199,10 @@ class Rainbow(nn.Module):
 
         dist = self.model.compute_prob(s)   # size: (16,31,51)
         log_p = torch.log(dist[range(16), next_action])     # size: (16,51)
-        loss = -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
+        loss += -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
+
+        print("loss: ")
+        print(loss)
 
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
