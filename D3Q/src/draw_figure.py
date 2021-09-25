@@ -39,12 +39,12 @@ def read_performance(path, attribute):
     return success_rate_new
 
 
-def show_model_performance(path, record_list=range(1, 4)):
+def show_model_performance(path, record_list=range(1, 6)):
     attributes = ['success_rate', 'ave_reward', 'ave_turns']
     records = {
-        'success_rate': {'100': 0, '200': 0, '300': 0},
-        'ave_reward': {'100': 0, '200': 0, '300': 0},
-        'ave_turns': {'100': 0, '200': 0, '300': 0}
+        'success_rate': {'100': 0, '200': 0, '300': 0, '400': 0, '500': 0},
+        'ave_reward': {'100': 0, '200': 0, '300': 0, '400': 0, '500': 0},
+        'ave_turns': {'100': 0, '200': 0, '300': 0, '400': 0, '500': 0}
     }
     for i in record_list:
         data = json.load(open('{}_{}/agt_9_performance_records.json'.format(path, i), 'rb'))
@@ -52,6 +52,8 @@ def show_model_performance(path, record_list=range(1, 4)):
             records[attribute]['100'] += data[attribute]['100'] / len(record_list)
             records[attribute]['200'] += data[attribute]['200'] / len(record_list)
             records[attribute]['300'] += data[attribute]['300'] / len(record_list)
+            records[attribute]['400'] += data[attribute]['400'] / len(record_list)
+            records[attribute]['500'] += data[attribute]['500'] / len(record_list)
     print(path)
     print(records)
     return records
@@ -98,7 +100,7 @@ def main(params):
     plt.ylabel('Success rate')
     plt.xlabel('Epoch')
     plt.legend(curve_list, label_list, loc=4)
-    plt.xlim([0, 250])
+    plt.xlim([0, 500])
     plt.ylim([0, 0.9])
     plt.savefig('./figure.pdf', format='pdf')
 
