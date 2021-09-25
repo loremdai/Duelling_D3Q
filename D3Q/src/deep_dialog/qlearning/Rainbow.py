@@ -94,18 +94,20 @@ class Network(nn.Module):
     def forward(self, x):
         p = self.compute_prob(x)
         q = torch.sum(p * self.z, dim=2)
-        return q
+        return q  # size: (16,31)
 
     def compute_prob(self, inputs):
         feature = self.feature_layer(inputs)
-        value = self.value_layer(F.relu(self.value_hid_layer(feature))).view(-1, 1,
-                                                                             self.atom_size)  # size: (16,1,atom_size)
+        value = self.value_layer(F.relu(self.value_hid_layer(feature))).view(-1, 1, self.atom_size)
+        # size: (16,1,atom_size)
         advantage = self.advantage_layer(F.relu(self.advantage_hid_layer(feature))).view(-1, self.output_size,
-                                                                                         self.atom_size)  # size: (16,output_size,atom_size)
+                                                                                         self.atom_size)
+        # size: (16,output_size,atom_size)
         q_atoms = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
+
         prob = F.softmax(q_atoms, dim=-1)
         prob = prob.clamp(min=1e-3)  # 防止除数为0的情况
-        return prob
+        return prob  # size: (16,31,atom_size=51)
 
     def reset_noise(self):
         """Reset all noisy layers."""
@@ -173,29 +175,31 @@ class Rainbow(nn.Module):
         delta_z = float(self.v_max - self.v_min) / (self.atom_size - 1)
 
         with torch.no_grad():
-            next_action = self.target_model(s_prime).argmax(1)
-            next_dist = self.target_model.compute_prob(s_prime)
-            next_dist = next_dist[range(16), next_action]
+            next_action = self.target_model(s_prime).argmax(1)  # size: (16)
+            next_dist = self.target_model.compute_prob(s_prime)  # size: (16,31,51)
+            next_dist = next_dist[range(16), next_action]  # size: (16,51)     p{x_(t+1),a^*}
 
-            t_z = torch.clamp((r.squeeze_(0) + self.gamma * self.z), min=self.v_min, max=self.v_max)
-            b = (t_z - self.v_min) / delta_z
-            l = b.floor().long()
-            u = b.ceil().long()
+            t_z = torch.clamp((r.squeeze_(0) + self.gamma * self.z), min=self.v_min, max=self.v_max)  # size: (16,51)
+            b = (t_z - self.v_min) / delta_z  # size: (16,51)
+            l = b.floor().long()  # size: (16,51)
+            u = b.ceil().long()  # size: (16,51)
 
             offset = (torch.linspace(start=0, end=((16 - 1) * self.atom_size), steps=16).long()
-                      .unsqueeze(1).expand(16, self.atom_size).to(device))
+                      .unsqueeze(1).expand(16, self.atom_size).to(device))  # size: (16,51)
 
-            proj_dist = torch.zeros(next_dist.size(), device=device)
-            proj_dist.view(-1).index_add_(
-                0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1)
-            )
-            proj_dist.view(-1).index_add_(
-                0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1)
-            )
+            proj_dist = torch.zeros(next_dist.size(), device=device)  # size: (16,51)
 
-        dist = self.model.compute_prob(s)
-        log_p = torch.log(dist[range(16), next_action])
-        loss = -(proj_dist * log_p).sum(1).mean()
+            proj_dist.view(-1).index_add_(
+                dim=0, index=(l + offset).view(-1), tensor=(next_dist * (u.float() - b)).view(-1)
+            )  # m_l  size: (16,51)
+
+            proj_dist.view(-1).index_add_(
+                dim=0, index=(u + offset).view(-1), tensor=(next_dist * (b - l.float())).view(-1)
+            )  # m_u  size: (16,51)
+
+        dist = self.model.compute_prob(s)   # size: (16,31,51)
+        log_p = torch.log(dist[range(16), next_action])     # size: (16,51)
+        loss = -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
 
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
@@ -203,7 +207,7 @@ class Rainbow(nn.Module):
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
-        a = self.model(inputs).to(device)
+        a = self.model(inputs)
         a = a.detach().cpu().data.numpy()[0]
         return a
 

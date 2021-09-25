@@ -11,7 +11,7 @@ import numpy as np
 
 ########## 该文件为世界模型代码(在usersim_model.py文件中被调用） ##########
 
-use_cuda = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class SimulatorModel(nn.Module):
@@ -74,11 +74,8 @@ class SimulatorModel(nn.Module):
         self.MSELoss = nn.MSELoss()
         self.BCEWithLogitsLoss = nn.BCEWithLogitsLoss()  # BCEWithLogitsLoss就是把Sigmoid-BCELoss合成一步
 
-        if use_cuda:
-            self.cuda()
-
     def Variable(self, x):
-        return Variable(x, requires_grad=False).cuda() if use_cuda else Variable(x, requires_grad=False)
+        return Variable(x, requires_grad=False).to(device)
 
     # ex: [[2], [3], [42]]
     def one_hot(self, int_list, num_digits):
@@ -96,19 +93,19 @@ class SimulatorModel(nn.Module):
             t = self.Variable(torch.FloatTensor(np.int32(t_t)))
             au = self.Variable(torch.LongTensor(np.squeeze(ua_t)))
 
-            s_term1 = self.s_enc_layer1(s)
-            s_term2 = self.s_enc_layer2(s)
-            encoded_s = torch.mul(s_term1, s_term2)
+            s_term1 = self.s_enc_layer1(s).to(device)
+            s_term2 = self.s_enc_layer2(s).to(device)
+            encoded_s = torch.mul(s_term1, s_term2).to(device)
 
-            a_term1 = self.a_enc_layer1(a)
-            a_term2 = self.a_enc_layer2(a)
-            encoded_a = torch.mul(a_term1, a_term2)
+            a_term1 = self.a_enc_layer1(a).to(device)
+            a_term2 = self.a_enc_layer2(a).to(device)
+            encoded_a = torch.mul(a_term1, a_term2).to(device)
 
-            h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
+            h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1)).to(device)
 
-            r_pred = self.r_pred_layer(h)
-            t_pred = self.t_pred_layer(h)
-            au_pred = self.au_pred_layer(h)
+            r_pred = self.r_pred_layer(h).to(device)
+            t_pred = self.t_pred_layer(h).to(device)
+            au_pred = self.au_pred_layer(h).to(device)
 
             self.optimizer.zero_grad()
 
@@ -123,20 +120,20 @@ class SimulatorModel(nn.Module):
         if self.nn_type == "MLP":
             s = self.Variable(torch.FloatTensor(s))
             a = self.Variable(torch.FloatTensor(self.one_hot(a, self.agent_action_size)))
-            s_term1 = self.s_enc_layer1(s)
-            s_term2 = self.s_enc_layer2(s)
-            encoded_s = torch.mul(s_term1, s_term2)
+            s_term1 = self.s_enc_layer1(s).to(device)
+            s_term2 = self.s_enc_layer2(s).to(device)
+            encoded_s = torch.mul(s_term1, s_term2).to(device)
 
-            a_term1 = self.a_enc_layer1(a)
-            a_term2 = self.a_enc_layer2(a)
-            a_term = torch.mul(a_term1, a_term2)
-            encoded_a = torch.unsqueeze(a_term, 0)
+            a_term1 = self.a_enc_layer1(a).to(device)
+            a_term2 = self.a_enc_layer2(a).to(device)
+            a_term = torch.mul(a_term1, a_term2).to(device)
+            encoded_a = torch.unsqueeze(a_term, 0).to(device)
 
-            h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
+            h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1)).to(device)
 
-            r_pred = self.r_pred_layer(h).cpu().data.numpy()
-            t_pred = self.t_pred_layer(h).cpu().data.numpy()
-            au_pred = torch.max(self.au_pred_layer(h), 1)[1].cpu().data.numpy()
+            r_pred = self.r_pred_layer(h).detach().cpu().data.numpy()
+            t_pred = self.t_pred_layer(h).detach().cpu().data.numpy()
+            au_pred = torch.max(self.au_pred_layer(h), 1)[1].detach().cpu().data.numpy()
             return au_pred, r_pred, t_pred
 
     def save_model(self, model_path):

@@ -180,7 +180,7 @@ class DuellingDQN(nn.Module):
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
-        a = self.model(inputs).to(device)
+        a = self.model(inputs)
         a = a.detach().cpu().data.numpy()[0]
         return a
 
