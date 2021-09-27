@@ -39,7 +39,7 @@ def read_performance(path, attribute):
     return success_rate_new
 
 
-def show_model_performance(path, record_list=range(1, 6)):
+def show_model_performance(path, record_list=range(1, 6)):  # 此处的record_list指的是epoch的轮数.
     attributes = ['success_rate', 'ave_reward', 'ave_turns']
     records = {
         'success_rate': {'100': 0, '200': 0, '300': 0, '400': 0, '500': 0},
@@ -61,7 +61,7 @@ def show_model_performance(path, record_list=range(1, 6)):
 
 def draw(color, marker, linestyle, record_list=range(1, 4), model_path="", attribute="success_rate"):
     datapoints = []
-    for i in record_list:
+    for i in record_list:   # record_list在此处指文件夹名
         datapoints.append(
             read_performance('{}_{}/agt_9_performance_records.json'.format(model_path, i), attribute))
 
@@ -76,7 +76,7 @@ def draw(color, marker, linestyle, record_list=range(1, 4), model_path="", attri
 
 
 def main(params):
-    colors = ['#2f79c0', '#278b18', '#ff5186', '#8660a4', '#D49E0F', '#FF8800']
+    colors = ['#2f79c0', '#278b18', '#ff5186', '#8660a4', '#cd0b04', '#FF8800']
     markers = [',', 'o', '^', 's', 'p', 'd']
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted', '-.', '--', '-', ':']
     global_idx = 1500
@@ -86,13 +86,14 @@ def main(params):
         './deep_dialog/checkpoints/dqn_1',
         './deep_dialog/checkpoints/dqn_5',
         './deep_dialog/checkpoints/ddq_5',
-        './deep_dialog/checkpoints/d3q_rnn_5'
+        './deep_dialog/checkpoints/d3q_rnn_5',
+        './deep_dialog/checkpoints/duellingdqn_5'
     ]
-    label_list = ['DQN(1)', 'DQN(5)', 'DDQ(5)', 'D3Q']
+    label_list = ['DQN(1)', 'DQN(5)', 'DDQ(5)', 'D3Q', 'DuellingDQN']
 
     curve_list = []
     for i, model in enumerate(model_path_list):
-        record_list = range(1, 4)
+        record_list = range(1, 4)   # 传入给draw函数
         curve_list.append(draw(model_path=model, color=colors[i], marker=markers[i], linestyle=linestyles[i],
                                record_list=record_list))
 
@@ -107,7 +108,7 @@ def main(params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--result_file', dest='result_file', type=str, default='agt_10_performance_records.json',
+    parser.add_argument('--result_file', dest='result_file', type=str, default='./deep_dialog/checkpoints/duellingdqn_5_1/agt_9_performance_records.json',
                         help='path to the result file')
 
     args = parser.parse_args()
