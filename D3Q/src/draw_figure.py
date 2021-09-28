@@ -108,7 +108,7 @@ def main(params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--result_file', dest='result_file', type=str, default='./deep_dialog/checkpoints/duellingdqn_5_1/agt_9_performance_records.json',
+    parser.add_argument('--result_file', dest='result_file', type=str, default='agt_9_performance_records.json',
                         help='path to the result file')
 
     args = parser.parse_args()
