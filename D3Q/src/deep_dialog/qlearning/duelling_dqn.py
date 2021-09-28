@@ -176,7 +176,6 @@ class DuellingDQN(nn.Module):
         td_error = td_target - q_a
 
         loss += td_error.pow(2).sum()  # Loss Function是td-error的均方误差
-        # loss = F.smooth_l1_loss(q_a, td_target)
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
