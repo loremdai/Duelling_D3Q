@@ -167,13 +167,18 @@ class DuellingDQN(nn.Module):
         q_prime = self.target_model(s_prime)
 
         # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  size: (16,1)
-        td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
+        # td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
+        # loss += td_error.pow(2).sum()  # Loss Function是td-error的均方误差
+        # loss.backward()
 
         # double dqn td_error
         # td_error = r.squeeze_(0) + torch.mul(torch.gather(q_prime, dim=1, index=torch.argmax(q, dim=1, keepdim=True)),
         #                                      self.gamma) - torch.gather(q, 1, a)
+        q_a = torch.gather(q, 1, a)
+        td_target = r.squeeze_(0) + torch.mul(
+            q_prime.gather(1, self.model(s_prime).argmax(dim=1, keepdim=True)).detach(), self.gamma).to(device)
 
-        loss += td_error.pow(2).sum()  # Loss Function是td-error的均方误差
+        loss = F.smooth_l1_loss(q_a, td_target)
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
