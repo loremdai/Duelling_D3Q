@@ -172,7 +172,7 @@ class Rainbow(nn.Module):
         delta_z = float(self.v_max - self.v_min) / (self.atom_size - 1)
 
         with torch.no_grad():
-            next_action = self.target_model(s_prime).argmax(1)  # size: (16)
+            next_action = self.model(s_prime).argmax(1)  # size: (16)
             next_dist = self.target_model.compute_prob(s_prime)  # size: (16,31,51)
             next_dist = next_dist[range(16), next_action]  # size: (16,51)     p{x_(t+1),a^*}
 
