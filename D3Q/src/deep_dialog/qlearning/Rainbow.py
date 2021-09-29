@@ -137,7 +137,7 @@ class Rainbow(nn.Module):
         # hyper parameters
         self.gamma = 0.9
         self.reg_l2 = 1e-3
-        self.max_norm = 10
+        self.max_norm = 10.0
         self.target_update_period = 100
         lr = 0.001
 
@@ -172,7 +172,7 @@ class Rainbow(nn.Module):
         delta_z = float(self.v_max - self.v_min) / (self.atom_size - 1)
 
         with torch.no_grad():
-            next_action = self.model(s_prime).argmax(1)  # size: (16)
+            next_action = self.model(s_prime).argmax(1)  # size: (16)   instrument Double DQN
             next_dist = self.target_model.compute_prob(s_prime)  # size: (16,31,51)
             next_dist = next_dist[range(16), next_action]  # size: (16,51)     p{x_(t+1),a^*}
 
@@ -195,7 +195,7 @@ class Rainbow(nn.Module):
             )  # m_u  size: (16,51)
 
         dist = self.model.compute_prob(s)   # size: (16,31,51)
-        log_p = torch.log(dist[range(16), next_action])     # size: (16,51)
+        log_p = torch.log(dist[range(16), a])     # size: (16,51)
         loss = -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
 
         loss.backward()
