@@ -101,7 +101,7 @@ class Network(nn.Module):
         advantage = self.advantage_layer(F.relu(self.advantage_hid_layer(feature))).view(-1, self.output_size,
                                                                                          self.atom_size)
         # size: (16,output_size,atom_size)
-        q_atoms = value + advantage - torch.mean(advantage, dim=-1, keepdim=True)
+        q_atoms = value + advantage - torch.mean(advantage, dim=1, keepdim=True)
 
         prob = F.softmax(q_atoms, dim=-1)
         prob = prob.clamp(min=1e-3)  # 防止除数为0的情况
