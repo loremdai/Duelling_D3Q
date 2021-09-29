@@ -5,10 +5,8 @@ from torch.nn.utils import clip_grad_norm_
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 class NoisyLinear(nn.Module):
     def __init__(self, input_size, output_size, std_init=0.5):
@@ -163,7 +161,6 @@ class Rainbow(nn.Module):
     # 在文件AgentDQN的train/train_iter函数中被调用
     def singleBatch(self, batch):
         self.optimizer.zero_grad()
-        loss = 0
 
         # each example in a batch: [s, a, r, s_prime, term]
         s = self.Variable(torch.FloatTensor(batch[0]))  # size: (16,213)
@@ -199,10 +196,7 @@ class Rainbow(nn.Module):
 
         dist = self.model.compute_prob(s)   # size: (16,31,51)
         log_p = torch.log(dist[range(16), next_action])     # size: (16,51)
-        loss += -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
-
-        print("loss: ")
-        print(loss)
+        loss = -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
 
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
