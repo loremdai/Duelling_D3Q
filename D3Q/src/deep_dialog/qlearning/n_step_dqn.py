@@ -119,7 +119,7 @@ class nStepDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 10.0
         self.target_update_period = 100
-        lr = 0.003
+        lr = 0.002
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -127,6 +127,9 @@ class nStepDQN(nn.Module):
     def update_network(self):
         # update target network
         self.target_model.load_state_dict(self.model.state_dict())
+        # NoisyNet settings: (reset noise)
+        self.model.reset_noise()
+        self.target_model.reset_noise()
 
     def Variable(self, x):
         return Variable(x, requires_grad=False).to(device)
@@ -145,9 +148,6 @@ class nStepDQN(nn.Module):
         q = self.model(s)  # size: (16,31)
         q_prime = self.target_model(s_prime)
 
-        # the batch style of (td_error = r + self.gamma * torch.max(q_prime) - q[a])  size: (16,1)
-        # td_error = r.squeeze_(0) + torch.mul(torch.max(q_prime, 1)[0], self.gamma).unsqueeze(1) - torch.gather(q, 1, a)
-
         # double dqn td_error
         q_a = torch.gather(q, 1, a)
         td_target = r.squeeze_(0) + torch.mul(
@@ -158,10 +158,6 @@ class nStepDQN(nn.Module):
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
-
-        # NoisyNet settings: (reset noise)
-        self.model.reset_noise()
-        self.target_model.reset_noise()
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
