@@ -9,7 +9,6 @@ import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 # class Network(nn.Module):
 #     def __init__(self, input_size, hidden_size, output_size):
 #         super(Network, self).__init__()
