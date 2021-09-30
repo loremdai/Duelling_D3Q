@@ -45,7 +45,7 @@ class Agent_nStep(Agent):
         self.n_step = 3
         self.n_step_pool = deque(maxlen=self.n_step)
         self.experience_replay_pool_size = params.get('experience_replay_pool_size', 1000)
-        self.experience_replay_pool = []  # experience replay pool <s_t, a_t, r_t, s_t+1>
+        self.experience_replay_pool = []  # experience replay pool <s_t, a_t, r_t, s_t+1, t ,u_t>
         self.experience_replay_pool_from_model = []  # 存放"世界模型生成的经验"的回放缓存池，B^s
 
         self.epsilon = params['epsilon']
@@ -289,7 +289,6 @@ class Agent_nStep(Agent):
         # 根据训练/预测模式、来自世界模型与否，相应的存放经验
         if self.predict_mode == False:  # 训练模式
             if self.warm_start == 1:  # 只有在热启动阶段才把经验放入回放缓存池
-
                 # n-step implement
                 if self.n_step > 1:     # enable n_step or not?
                     self.n_step_pool.append(training_example)  # collect examples
