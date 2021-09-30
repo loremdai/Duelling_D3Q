@@ -119,10 +119,10 @@ class Network(nn.Module):
         self.advantage_layer.reset_noise()
 
 
-class Rainbow(nn.Module):
+class CategoricalDQN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, v_min=0.0, v_max=200.0,
                  atom_size=51):  # (state_dimension, hidden_size, num_actions)
-        super(Rainbow, self).__init__()
+        super(CategoricalDQN, self).__init__()
 
         # Categorical DQN init
         self.v_min = v_min
