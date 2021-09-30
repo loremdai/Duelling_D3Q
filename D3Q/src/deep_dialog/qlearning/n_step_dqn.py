@@ -131,7 +131,7 @@ class nStepDQN(nn.Module):
     def Variable(self, x):
         return Variable(x, requires_grad=False).to(device)
 
-    # 在AgentDuellingDQN的train/train_iter函数中被调用
+    # 在AgentDQN的train/train_iter函数中被调用
     def singleBatch(self, batch):
         self.optimizer.zero_grad()
         loss = 0
