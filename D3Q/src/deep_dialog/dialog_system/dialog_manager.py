@@ -126,7 +126,7 @@ class DialogManager:
                     self.agent.register_experience_replay_tuple(self.state, self.agent_action, self.reward,
                                                                 self.state_tracker.get_state_for_agent(),
                                                                 self.episode_over, self.state_user, self.use_model)
-            elif record_training_data:  # 不使用鉴别器
+            elif record_training_data:
                 self.agent.register_experience_replay_tuple(self.state, self.agent_action, self.reward,
                                                             self.state_tracker.get_state_for_agent(), self.episode_over,
                                                             self.state_user, self.use_model)

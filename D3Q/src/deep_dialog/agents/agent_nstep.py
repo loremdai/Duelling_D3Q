@@ -288,45 +288,36 @@ class Agent_nStep(Agent):
 
         # 根据训练/预测模式、来自世界模型与否，相应的存放经验
         if self.predict_mode == False:  # 训练模式
-            if self.warm_start == 1:  # 只有在热启动阶段才把经验放入回放缓存池
-                # n-step implement
-                if self.n_step > 1:     # enable n_step or not?
-                    self.n_step_pool.append(training_example)  # collect examples
-                    if len(self.n_step_pool) < self.n_step:   # n_step ready or not?
-                        return ()   # keep collecting
-                    # extract key info from the n_step pool
-                    rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
-                    training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
-                    self.experience_replay_pool.append(training_example)
-                    self.n_step_pool.clear()
-                else:   # 1-step
-                    self.experience_replay_pool.append(training_example)
+            if self.warm_start == 1:  # 热启动阶段
+                self.experience_replay_pool.append(training_example)
 
         else:  # 预测模式
             if not from_model:  # 真实经验
-                # n-step implement
+                # n-step
                 if self.n_step > 1:
                     self.n_step_pool.append(training_example)
                     if len(self.n_step_pool) < self.n_step:
                         return ()
+                    print("n_step_pool length: {}".format(len(self.n_step_pool)))
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
                     self.experience_replay_pool.append(training_example)
-                    self.n_step_pool.clear()
-                else:   # 1-step
+                # 1-step
+                else:
                     self.experience_replay_pool.append(training_example)
 
             else:  # 模拟经验（来自于世界模型）
-                # n-step implement
+                # n-step
                 if self.n_step > 1:
                     self.n_step_pool.append(training_example)
                     if len(self.n_step_pool) < self.n_step:
                         return ()
+                    print("n_step_pool length: {}".format(len(self.n_step_pool)))
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
-                    self.experience_replay_pool.append(training_example)
-                    self.n_step_pool.clear()
-                else:   # 1-step
+                    self.experience_replay_pool_from_model.append(training_example)
+                # 1-step
+                else:
                     self.experience_replay_pool_from_model.append(training_example) # 放入世界模型池中
 
         # 若溢出，则保留最新经验
