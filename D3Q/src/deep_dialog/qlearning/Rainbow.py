@@ -8,6 +8,7 @@ from torch.autograd import Variable
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 class NoisyLinear(nn.Module):
     def __init__(self, input_size, output_size, std_init=0.5):
         super(NoisyLinear, self).__init__()
@@ -94,13 +95,16 @@ class Network(nn.Module):
         q = torch.sum(p * self.z, dim=2)
         return q  # size: (16,31)
 
-    def compute_prob(self, inputs):
-        feature = self.feature_layer(inputs)
-        value = self.value_layer(F.relu(self.value_hid_layer(feature))).view(-1, 1, self.atom_size)
-        # size: (16,1,atom_size)
-        advantage = self.advantage_layer(F.relu(self.advantage_hid_layer(feature))).view(-1, self.output_size,
-                                                                                         self.atom_size)
-        # size: (16,output_size,atom_size)
+    def compute_prob(self, x):
+        feature = self.feature_layer(x)
+
+        advantage_hid = F.relu(self.advantage_hid_layer(feature))
+        advantage = self.advantage_layer(advantage_hid).view(-1, self.output_size,
+                                                             self.atom_size)  # (16,output_size,atom_size)
+
+        value_hid = F.relu(self.value_hid_layer(feature))
+        value = self.value_layer(value_hid).view(-1, 1, self.atom_size)  # size: (16,1,atom_size)
+
         q_atoms = value + advantage - torch.mean(advantage, dim=1, keepdim=True)
 
         prob = F.softmax(q_atoms, dim=-1)
@@ -142,10 +146,6 @@ class Rainbow(nn.Module):
         lr = 0.001
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
-
-    # 更新目标网络（将model的参数载入到target_model的参数）
-    def update_fixed_target_network(self):
-        self.target_model.load_state_dict(self.model.state_dict())
 
     # 更新网络
     def update_network(self):
@@ -194,9 +194,9 @@ class Rainbow(nn.Module):
                 0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1)
             )  # m_u  size: (16,51)
 
-        dist = self.model.compute_prob(s)   # size: (16,31,51)
-        log_p = torch.log(dist[range(16), a])     # size: (16,51)
-        loss = -(proj_dist * log_p).sum(1).mean()   # cross-entropy term of the KL divergence
+        dist = self.model.compute_prob(s)  # size: (16,31,51)
+        log_p = torch.log(dist[range(16), a])  # size: (16,51)
+        loss = -(proj_dist * log_p).sum(1).mean()  # cross-entropy term of the KL divergence
 
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)

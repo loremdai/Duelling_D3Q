@@ -39,7 +39,7 @@ class DialogManager:
         # self.running_user=self.user
 
         # 根据是否采用热启动，选择对应的用户模拟器
-        if not warm_start:  # 未采用热启动
+        if not warm_start:  # 不采用热启动
             self.running_user = self.user_planning  # 使用"基于模型的用户模拟器"作为"正在运行的用户模拟器"
             self.use_model = True  # 使用世界模型
         else:  # 采用热启动
@@ -105,7 +105,7 @@ class DialogManager:
         #   add into the pool
         ########################################################################
         if not simulation_for_discriminator:
-            # store experiences for the discriminator
+            ##### store experiences for the discriminator #####
             if self.use_model:  # 若使用世界模型
                 self.discriminator.store_user_model_experience((
                     self.state_user, self.agent.action, self.state_user_next,
@@ -115,7 +115,7 @@ class DialogManager:
                     self.state_user, self.agent.action, self.state_user_next,
                     self.reward, self.episode_over, self.user_action))
 
-            # store the experiences for the agent
+            ##### store the experiences for the agent #####
             if self.use_model and filter_experience_by_discriminator:  # 若使用了世界模型和鉴别器
                 discriminate_check = self.discriminator.single_check((self.state, self.agent_action, self.reward,
                                                                       self.state_tracker.get_state_for_agent(),
@@ -126,12 +126,12 @@ class DialogManager:
                     self.agent.register_experience_replay_tuple(self.state, self.agent_action, self.reward,
                                                                 self.state_tracker.get_state_for_agent(),
                                                                 self.episode_over, self.state_user, self.use_model)
-            elif record_training_data:
+            elif record_training_data:  # 不使用鉴别器
                 self.agent.register_experience_replay_tuple(self.state, self.agent_action, self.reward,
                                                             self.state_tracker.get_state_for_agent(), self.episode_over,
                                                             self.state_user, self.use_model)
 
-            # store the experiences for the world model
+            ##### store the experiences for the world model #####
             if record_training_data_for_user and not self.use_model:  # 未使用世界模型
                 self.user_planning.register_experience_replay_tuple(self.state_user, self.agent.action,
                                                                     self.state_user_next, self.reward,
@@ -141,7 +141,7 @@ class DialogManager:
                 return (self.episode_over, self.reward, discriminate_check)
             else:
                 return (self.episode_over, self.reward)
-        else:
+        else:   # simulation for discriminator
             return (
                 self.state_user, self.agent.action, self.state_user_next, self.reward, self.episode_over,
                 self.user_action)
