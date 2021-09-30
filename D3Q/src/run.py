@@ -306,7 +306,7 @@ elif agt == 5:
 elif agt == 9:
     agent = AgentDQN(movie_kb, act_set, slot_set, agent_params)
 elif agt == 10:
-    agent = AgentDuellingDQN(movie_kb, act_set, slot_set, agent_params)
+    agent = Agent_nStep(movie_kb, act_set, slot_set, agent_params)
 # add your custom agent here
 else:
     pass
@@ -871,7 +871,7 @@ def run_episodes(count, status):
             # 每执行50轮循环，保存模型和performance_records
             path = '{}/duellingdqn.model.epoch{}'.format(params['write_model_dir'], episode)
             if params['save_model'] and episode % 50 == 0:
-                agent.save_duelling_dqn(path)
+                agent.save_dqn(path)
             save_performance_records(params['write_model_dir'], agt, performance_records)
 
         # 打印该次episode的评价指标
@@ -895,7 +895,7 @@ def run_episodes(count, status):
     # 保存模型和performance_records
     path = '{}/duellingdqn.model.epoch{}'.format(params['write_model_dir'], '_final')  # 保存路径
     if params['save_model']:  # 默认保存模型
-        agent.save_duelling_dqn(path)
+        agent.save_dqn(path)
     if agt == 10 and params['trained_model_path'] == None:  # 若agt=10且处于训练模式，追加保存性能记录
         save_performance_records(params['write_model_dir'], agt, performance_records)
 
