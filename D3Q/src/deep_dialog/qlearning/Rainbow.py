@@ -151,9 +151,6 @@ class Rainbow(nn.Module):
     def update_network(self):
         # update target network
         self.target_model.load_state_dict(self.model.state_dict())
-        # NoisyNet settings: (reset noise)
-        self.model.reset_noise()
-        self.target_model.reset_noise()
 
     def Variable(self, x):
         return Variable(x, requires_grad=False).to(device)
@@ -174,15 +171,18 @@ class Rainbow(nn.Module):
         with torch.no_grad():
             next_action = self.model(s_prime).argmax(1)  # size: (16)   instrument Double DQN
             next_dist = self.target_model.compute_prob(s_prime)  # size: (16,31,51)
-            next_dist = next_dist[range(16), next_action]  # size: (16,51)     p{x_(t+1),a^*}
+            next_dist = next_dist[range(16), next_action]  # size: (16,51)  p{x_(t+1),a^*}
 
-            t_z = torch.clamp((r.squeeze_(0) + self.gamma * self.z), min=self.v_min, max=self.v_max)  # size: (16,51)
+            t_z = r.squeeze_(0) + self.gamma * self.z
+            t_z = torch.clamp(t_z, min=self.v_min, max=self.v_max)  # size: (16,51)
             b = (t_z - self.v_min) / delta_z  # size: (16,51)
             l = b.floor().long()  # size: (16,51)
             u = b.ceil().long()  # size: (16,51)
 
-            offset = (torch.linspace(start=0, end=((16 - 1) * self.atom_size), steps=16).long()
-                      .unsqueeze(1).expand(16, self.atom_size).to(device))  # size: (16,51)
+            offset = (torch.linspace(start=0, end=((16 - 1) * self.atom_size), steps=16)
+                      .long()
+                      .unsqueeze(1)
+                      .expand(16, self.atom_size).to(device))  # size: (16,51)
 
             proj_dist = torch.zeros(next_dist.size(), device=device)  # size: (16,51)
 
@@ -201,6 +201,10 @@ class Rainbow(nn.Module):
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
+
+        # NoisyNet settings: (reset noise)
+        self.model.reset_noise()
+        self.target_model.reset_noise()
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
