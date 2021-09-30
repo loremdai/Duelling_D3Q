@@ -145,6 +145,9 @@ class DuellingDQN(nn.Module):
     def update_network(self):
         # update target network
         self.target_model.load_state_dict(self.model.state_dict())
+        # NoisyNet settings: (reset noise)
+        self.model.reset_noise()
+        self.target_model.reset_noise()
 
     def Variable(self, x):
         return Variable(x, requires_grad=False).to(device)
@@ -176,10 +179,6 @@ class DuellingDQN(nn.Module):
         loss.backward()
         clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
-
-        # NoisyNet settings: (reset noise)
-        self.model.reset_noise()
-        self.target_model.reset_noise()
 
     def predict(self, inputs):  # 输入是representation，一个numpy.hstack的矩阵
         inputs = self.Variable(torch.from_numpy(inputs).float())
