@@ -298,6 +298,7 @@ class Agent_nStep(Agent):
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
                     self.experience_replay_pool.append(training_example)
+                    self.n_step_pool.clear()
                 else:   # 1-step
                     self.experience_replay_pool.append(training_example)
 
@@ -311,6 +312,7 @@ class Agent_nStep(Agent):
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
                     self.experience_replay_pool.append(training_example)
+                    self.n_step_pool.clear()
                 else:   # 1-step
                     self.experience_replay_pool.append(training_example)
 
@@ -323,6 +325,7 @@ class Agent_nStep(Agent):
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
                     self.experience_replay_pool.append(training_example)
+                    self.n_step_pool.clear()
                 else:   # 1-step
                     self.experience_replay_pool_from_model.append(training_example) # 放入世界模型池中
 

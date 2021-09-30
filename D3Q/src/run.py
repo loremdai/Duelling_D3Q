@@ -306,7 +306,7 @@ elif agt == 5:
 elif agt == 9:
     agent = AgentDQN(movie_kb, act_set, slot_set, agent_params)
 elif agt == 10:
-    agent = AgentDuellingDQN(movie_kb, act_set, slot_set, agent_params)
+    agent = Agent_nStep(movie_kb, act_set, slot_set, agent_params)
 # add your custom agent here
 else:
     pass
@@ -777,10 +777,10 @@ def run_episodes(count, status):
             simulation_epoch_with_gan_control_filter(3, False)  # 不使用世界模型
 
         # 每轮episode结束后更新目标网络
-        # agent.duelling_dqn.update_fixed_target_network()
+        # agent.dqn.update_fixed_target_network()
 
         # 每轮episode结束后更新网络
-        agent.duelling_dqn.update_network()
+        agent.dqn.update_network()
 
         print("Episode: %s" % (episode))  # 打印当前episode
         agent.predict_mode = False

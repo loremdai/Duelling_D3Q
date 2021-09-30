@@ -19,8 +19,6 @@ import numpy as np
 from deep_dialog import dialog_config
 from .agent import Agent
 from deep_dialog.qlearning import DuellingDQN
-from deep_dialog.qlearning import Rainbow
-
 
 class AgentDuellingDQN(Agent):
     def __init__(self, movie_dict=None, act_set=None, slot_set=None, params=None):
@@ -53,9 +51,8 @@ class AgentDuellingDQN(Agent):
         if self.refine_state:
             self.state_dimension = 213
 
-        self.duelling_dqn = DuellingDQN(self.state_dimension, self.hidden_size, self.num_actions)
-        # self.duelling_dqn = Rainbow(self.state_dimension, self.hidden_size, self.num_actions)
-        self.clone_dqn = copy.deepcopy(self.duelling_dqn)
+        self.dqn = DuellingDQN(self.state_dimension, self.hidden_size, self.num_actions)
+        self.clone_dqn = copy.deepcopy(self.dqn)
 
         self.predict_mode = params.get('predict_mode', False)
 
@@ -224,7 +221,7 @@ class AgentDuellingDQN(Agent):
     #             return self.rule_policy()   # 返回的是索引
     #         else:   # 若不是热启动阶段，则基于DQN选择动作
     #             return self.available_actions[
-    #                 np.argmax(self.duelling_dqn.predict(representation)[self.available_actions])
+    #                 np.argmax(self.dqn.predict(representation)[self.available_actions])
     #             ]
 
     # NoisyNet version
@@ -236,7 +233,7 @@ class AgentDuellingDQN(Agent):
             return self.rule_policy()  # 返回的是索引
         else:  # 若不是热启动阶段，则基于DQN选择动作
             return self.available_actions[
-                np.argmax(self.duelling_dqn.predict(representation)[self.available_actions])
+                np.argmax(self.dqn.predict(representation)[self.available_actions])
             ]
 
     # 规则策略
@@ -307,7 +304,7 @@ class AgentDuellingDQN(Agent):
 
     # run over the whole replay buffer 汇总经验，根据batch_size打包预处理后进行训练
     def train(self, batch_size=16, num_iter=1, controller=0, use_real_example=True):
-        """ Train Duelling DQN with experience replay """
+        """ Train DQN with experience replay """
         self.cur_bellman_err = 0
         self.cur_bellman_err_planning = 0
         running_expereince_pool = self.experience_replay_pool + self.experience_replay_pool_from_model  # 总经验池
@@ -323,7 +320,7 @@ class AgentDuellingDQN(Agent):
                         v.append(batch[i][x])  # 纵向抽取16条经验中的每一个属性放入到v[]中
                     np_batch.append(np.vstack(
                         v))  # np_batch列表中的每一个元素为经验五元组中的一个项，如s、a、r、s_prime、term；其中列表元素（如np_batch[0]为状态s）的大小为(16,1)，
-                self.duelling_dqn.singleBatch(np_batch)  # 调用Duelling DQN进行训练
+                self.dqn.singleBatch(np_batch)  # 调用DQN进行训练
 
             if len(self.experience_replay_pool) != 0:
                 print(
@@ -375,21 +372,21 @@ class AgentDuellingDQN(Agent):
 
         self.experience_replay_pool = pickle.load(open(path, 'rb'))
 
-    def load_trained_DuellingDQN(self, path):
-        """ Load the trained Duelling DQN from a file """
+    def load_trained_DQN(self, path):
+        """ Load the trained DQN from a file """
 
         trained_file = pickle.load(open(path, 'rb'))
         model = trained_file['model']
 
-        print("trained Duelling DQN Parameters:", json.dumps(trained_file['params'], indent=2))
+        print("trained DQN Parameters:", json.dumps(trained_file['params'], indent=2))
         return model
 
-    def save_duelling_dqn(self, path):
+    def save_dqn(self, path):
         # return self.dqn.unzip()
-        self.duelling_dqn.save_model(path)
+        self.dqn.save_model(path)
 
-    def load_duelling_dqn(self, params):
-        self.duelling_dqn.load(params)
+    def load_dqn(self, params):
+        self.dqn.load(params)
 
     ################################################################################
     #    not-be-used functions
