@@ -298,7 +298,6 @@ class Agent_nStep(Agent):
                     self.n_step_pool.append(training_example)
                     if len(self.n_step_pool) < self.n_step:
                         return ()
-                    print("n_step_pool length: {}".format(len(self.n_step_pool)))
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
                     self.experience_replay_pool.append(training_example)
@@ -312,7 +311,6 @@ class Agent_nStep(Agent):
                     self.n_step_pool.append(training_example)
                     if len(self.n_step_pool) < self.n_step:
                         return ()
-                    print("n_step_pool length: {}".format(len(self.n_step_pool)))
                     rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
                     training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
                     self.experience_replay_pool_from_model.append(training_example)
