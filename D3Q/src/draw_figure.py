@@ -102,7 +102,7 @@ def main(params):
     plt.xlabel('Epoch')
     plt.legend(curve_list, label_list, loc=4)
     plt.xlim([0, 500])
-    plt.ylim([0, 0.9])
+    plt.ylim([0, 1])
     plt.savefig('./figure.pdf', format='pdf')
 
 
