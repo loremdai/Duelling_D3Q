@@ -50,7 +50,7 @@ class Agent_nStep(Agent):
 
         self.epsilon = params['epsilon']
         self.gamma = params.get('gamma', 0.9)
-        self.hidden_size = params.get('dqn_hidden_size', 60)
+        self.hidden_size = params.get('dqn_hidden_size', 80)
         self.warm_start = params.get('warm_start', 0)
         self.max_turn = params['max_turn'] + 5
 
