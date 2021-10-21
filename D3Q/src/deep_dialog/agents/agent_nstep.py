@@ -42,7 +42,7 @@ class Agent_nStep(Agent):
         self.agent_act_level = params['agent_act_level']
 
         # n-step init
-        self.n_step = 3
+        self.n_step = 5
         self.n_step_pool = deque(maxlen=self.n_step)
         self.experience_replay_pool_size = params.get('experience_replay_pool_size', 1000)
         self.experience_replay_pool = []  # experience replay pool <s_t, a_t, r_t, s_t+1, t ,u_t>
