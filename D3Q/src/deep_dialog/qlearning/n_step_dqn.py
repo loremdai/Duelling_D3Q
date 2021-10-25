@@ -119,7 +119,7 @@ class nStepDQN(nn.Module):
         self.reg_l2 = 1e-3
         self.max_norm = 1
         self.target_update_period = 10
-        lr = 0.002
+        lr = 0.003
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
