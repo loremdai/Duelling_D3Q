@@ -50,7 +50,8 @@ class DQN(nn.Module):
             self.cuda()
 
     # 更新目标网络（将model的参数载入到target_model的参数）
-    def update_fixed_target_network(self):
+    def update_network(self):
+        # update_fixed_target_network
         self.target_model.load_state_dict(self.model.state_dict())
 
     def Variable(self, x):
