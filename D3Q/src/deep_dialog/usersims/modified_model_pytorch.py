@@ -65,7 +65,7 @@ class SimulatorModel(nn.Module):
 
         # hyper parameters
         self.max_norm = 1  # 梯度裁剪参数
-        lr = 0.001
+        lr = 0.002
 
         # optimizer
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
@@ -98,13 +98,21 @@ class SimulatorModel(nn.Module):
 
             s_term1 = self.s_enc_layer1(s)
             s_term2 = self.s_enc_layer2(s)
-            encoded_s = torch.mul(s_term1, s_term2)
+            encoded_s = torch.mul(s_term1, s_term2)  # size:(16,80)
 
             a_term1 = self.a_enc_layer1(a)
             a_term2 = self.a_enc_layer2(a)
-            encoded_a = torch.mul(a_term1, a_term2)
+            encoded_a = torch.mul(a_term1, a_term2)  # size:(16,80)
 
-            h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
+            mean_s = torch.mean(encoded_s, dim=-1, keepdim=True)  # size (16,1)
+            mean_a = torch.mean(encoded_a, dim=-1, keepdim=True)  # size (16,1)
+            mean_sa = mean_s + mean_a  # size (16,1)
+
+            concat_sa = torch.cat((encoded_s, encoded_a), 1).unsqueeze(0)  # size (1,16,160)
+            h = (mean_sa + torch.max_pool2d(concat_sa, kernel_size=1, stride=(1, 2))).squeeze(0)
+            # size = (16,80)
+
+            #h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))  # size(16,80)
 
             r_pred = self.r_pred_layer(h)
             t_pred = self.t_pred_layer(h)
@@ -132,7 +140,14 @@ class SimulatorModel(nn.Module):
             a_term = torch.mul(a_term1, a_term2)
             encoded_a = torch.unsqueeze(a_term, 0)
 
-            h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
+            mean_s = torch.mean(encoded_s, dim=-1, keepdim=True)  # size (16,1)
+            mean_a = torch.mean(encoded_a, dim=-1, keepdim=True)  # size (16,1)
+            mean_sa = mean_s + mean_a  # size (16,1)
+
+            concat_sa = torch.cat((encoded_s, encoded_a), 1).unsqueeze(0)  # size (1,16,160)
+            h = (mean_sa + torch.max_pool2d(concat_sa, kernel_size=1, stride=(1, 2))).squeeze(0)
+
+            #h = self.shared_layers(torch.cat((encoded_s, encoded_a), 1))
 
             r_pred = self.r_pred_layer(h).cpu().data.numpy()
             t_pred = self.t_pred_layer(h).cpu().data.numpy()
