@@ -128,7 +128,7 @@ if __name__ == "__main__":
                         help='success rate threshold for user model')
     parser.add_argument('--agent_success_rate_threshold', dest='agent_success_rate_threshold', type=float, default=1,
                         help='success rate threshold for agent model')
-    parser.add_argument('--pretrain_discriminator', dest='pretrain_discriminator', type=int, default=0,
+    parser.add_argument('--pretrain_discriminator', dest='pretrain_discriminator', type=int, default=1,
                         help='whether to pretrain the discriminator')
     parser.add_argument('--discriminator_nn_type', dest='discriminator_nn_type', type=str, default='MLP',
                         help='NN model structure of the discriminator [MLP, RNN]')
