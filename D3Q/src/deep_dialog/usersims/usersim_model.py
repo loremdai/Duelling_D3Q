@@ -2,7 +2,7 @@ from .usersim import UserSimulator
 import argparse, json, random, copy, sys
 import numpy as np
 # from .model_pytorch import SimulatorModel
-from .model_pytorch import SimulatorModel
+from .modified_model_pytorch import SimulatorModel
 
 from deep_dialog import dialog_config
 
