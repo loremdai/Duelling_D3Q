@@ -37,7 +37,8 @@ class ModelBasedSimulator(UserSimulator):
         self.simulator_act_level = params['simulator_act_level']
 
         self.learning_phase = params['learning_phase']
-        self.hidden_size = params['hidden_size']
+        # self.hidden_size = params['hidden_size']
+        self.hidden_size = 128
 
         self.training_examples = []
         self.training_examples_episode = []

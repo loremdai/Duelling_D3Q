@@ -64,7 +64,7 @@ class SimulatorModel(nn.Module):
             self.au_pred_layer = nn.Sequential(nn.Linear(hidden_size, user_action_size))  # user-action, classification
 
         # hyper parameters
-        self.max_norm = 1  # 梯度裁剪参数
+        self.max_norm = 10  # 梯度裁剪参数
         lr = 0.002
 
         # optimizer
