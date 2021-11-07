@@ -65,7 +65,7 @@ class SimulatorModel(nn.Module):
 
         # hyper parameters
         self.max_norm = 10  # 梯度裁剪参数
-        lr = 0.002
+        lr = 0.001
 
         # optimizer
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
