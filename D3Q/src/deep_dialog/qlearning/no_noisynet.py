@@ -20,13 +20,13 @@ class Network(nn.Module):
 
         # Value layer
         self.value_layer = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size,1))
 
         # Advantage layer
         self.advantage_layer = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size,output_size))
 
