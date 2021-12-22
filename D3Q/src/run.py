@@ -5,7 +5,7 @@ import random
 
 from deep_dialog.dialog_system import DialogManager, text_to_dict
 from deep_dialog.agents import AgentCmd, InformAgent, RequestAllAgent, RandomAgent, EchoAgent, RequestBasicsAgent, \
-    AgentDQN, AgentDuellingDQN, AgentCategoricalDQN, Agent_nStep
+    AgentDQN, AgentDuellingDQN, Agent_nStep, Agent_NoNoisyNet
 from deep_dialog.usersims import RuleSimulator, ModelBasedSimulator
 from deep_dialog.controller import Discriminator
 
@@ -306,7 +306,7 @@ elif agt == 5:
 elif agt == 9:
     agent = AgentDQN(movie_kb, act_set, slot_set, agent_params)
 elif agt == 10:
-    agent = AgentDuellingDQN(movie_kb, act_set, slot_set, agent_params)     # edit different agents here
+    agent = Agent_NoNoisyNet(movie_kb, act_set, slot_set, agent_params)     # edit different agents here
 # add your custom agent here
 else:
     pass
