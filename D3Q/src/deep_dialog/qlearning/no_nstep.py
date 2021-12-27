@@ -119,9 +119,9 @@ class Network(nn.Module):
         self.advantage_layer.reset_noise()
 
 
-class DuelingDQN(nn.Module):
+class NoNStep(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):  # (state_dimension, hidden_size, num_actions)
-        super(DuelingDQN, self).__init__()
+        super(NoNStep, self).__init__()
 
         # model
         self.model = Network(input_size, hidden_size, output_size).to(device)
