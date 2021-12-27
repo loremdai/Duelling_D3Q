@@ -102,7 +102,7 @@ class Network(nn.Module):
 
 
 class NoDDQN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_step):  # (state_dimension, hidden_size, num_actions)
+    def __init__(self, input_size, hidden_size, output_size):  # (state_dimension, hidden_size, num_actions)
         super(NoDDQN, self).__init__()
 
         # model
