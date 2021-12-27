@@ -1,7 +1,7 @@
 from .agent_cmd import *
 from .agent_baselines import *
 from .agent_dqn import *
-from .agent_categorical_dqn import *
+from .agent_categorical import *
 
 from .agent_nstep import *
 
