@@ -56,7 +56,7 @@ class NoNoisyNet(nn.Module):
         self.gamma = 0.9 ** self.n_step
         self.reg_l2 = 1e-3
         self.max_norm = 10
-        # self.target_update_period = 10
+        self.target_update_period = 100
         lr = 0.002
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
