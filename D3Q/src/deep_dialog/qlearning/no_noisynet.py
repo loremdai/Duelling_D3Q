@@ -54,6 +54,7 @@ class NoNoisyNet(nn.Module):
         # hyper parameters
         #self.n_step = n_step
         #self.gamma = 0.9 ** self.n_step
+        self.gamma = 0.9
         self.reg_l2 = 1e-3
         self.max_norm = 10
         self.target_update_period = 100
