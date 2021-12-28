@@ -16,13 +16,9 @@ import random, copy, json
 import pickle
 import numpy as np
 
-from collections import deque
-from typing import Deque, Dict, List, Tuple
-
 from deep_dialog import dialog_config
 from .agent import Agent
 from deep_dialog.qlearning import NoNoisyNet
-
 
 class Agent_NoNoisyNet(Agent):
     def __init__(self, movie_dict=None, act_set=None, slot_set=None, params=None):
@@ -40,16 +36,13 @@ class Agent_NoNoisyNet(Agent):
         self.agent_run_mode = params['agent_run_mode']
         self.agent_act_level = params['agent_act_level']
 
-        # n-step init
-        self.n_step = 3
-        self.n_step_pool = deque(maxlen=self.n_step)
         self.experience_replay_pool_size = params.get('experience_replay_pool_size', 1000)
-        self.experience_replay_pool = []  # experience replay pool <s_t, a_t, r_t, s_t+1, t ,u_t>
+        self.experience_replay_pool = []  # experience replay pool <s_t, a_t, r_t, s_t+1>
         self.experience_replay_pool_from_model = []  # 存放"世界模型生成的经验"的回放缓存池，B^s
 
         self.epsilon = params['epsilon']
         self.gamma = params.get('gamma', 0.9)
-        self.hidden_size = params.get('dqn_hidden_size', 80)
+        self.hidden_size = params.get('dqn_hidden_size', 60)
         self.warm_start = params.get('warm_start', 0)
         self.max_turn = params['max_turn'] + 5
 
@@ -58,7 +51,7 @@ class Agent_NoNoisyNet(Agent):
         if self.refine_state:
             self.state_dimension = 213
 
-        self.dqn = NoNoisyNet(self.state_dimension, self.hidden_size, self.num_actions, self.n_step)
+        self.dqn = NoNoisyNet(self.state_dimension, self.hidden_size, self.num_actions)
         self.clone_dqn = copy.deepcopy(self.dqn)
 
         self.predict_mode = params.get('predict_mode', False)
@@ -214,6 +207,23 @@ class Agent_NoNoisyNet(Agent):
 
         return self.final_representation
 
+    # epsilon-贪婪策略
+    # def run_policy(self, representation):
+    #     """ epsilon-greedy policy """
+    #
+    #     if random.random() < self.epsilon:  # 处于epsilon概率则随机选择动作
+    #         return random.choice(self.available_actions)
+    #     else:
+    #         # 若当前处于热启动阶段，则按照基于规则的策略选择动作
+    #         if self.warm_start == 1:
+    #             if len(self.experience_replay_pool) > self.experience_replay_pool_size: # 若回放缓存池溢出
+    #                 self.warm_start = 2
+    #             return self.rule_policy()   # 返回的是索引
+    #         else:   # 若不是热启动阶段，则基于DQN选择动作
+    #             return self.available_actions[
+    #                 np.argmax(self.dqn.predict(representation)[self.available_actions])
+    #             ]
+
     # NoisyNet version
     def run_policy(self, representation):
         """ no epsilon greedy action selection """
@@ -263,17 +273,6 @@ class Agent_NoNoisyNet(Agent):
         raise Exception("action index not found")  # 查找不到则抛出异常，返回None
         return None
 
-    def _n_step_info(self, n_step_buffer, gamma):
-        reward, s_prime, done = n_step_buffer[-1][2:-1]  # get last example info
-        for example in reversed(list(n_step_buffer)[:-1]):  # iterate over first two example
-            r, s_p, t = example[2:-1]
-            reward = r + gamma * reward * (1 - t)
-            if t:
-                s_prime, done = (s_p, t)
-            else:
-                s_prime, done = (s_prime, done)
-        return reward, s_prime, done
-
     # 将经验放进回放缓存池（该函数在DM模块中被调用）
     def register_experience_replay_tuple(self, s_t, a_t, reward, s_tplus1, episode_over, st_user, from_model=False):
         """ Register feedback from the environment, to be stored as future training data """
@@ -287,35 +286,13 @@ class Agent_NoNoisyNet(Agent):
 
         # 根据训练/预测模式、来自世界模型与否，相应的存放经验
         if self.predict_mode == False:  # 训练模式
-            if self.warm_start == 1:  # 热启动阶段
+            if self.warm_start == 1:  # 只有在热启动阶段才把经验放入回放缓存池
                 self.experience_replay_pool.append(training_example)
-
         else:  # 预测模式
             if not from_model:  # 真实经验
-                # n-step
-                if self.n_step > 1:
-                    self.n_step_pool.append(training_example)
-                    if len(self.n_step_pool) < self.n_step:
-                        return ()
-                    rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
-                    training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
-                    self.experience_replay_pool.append(training_example)
-                # 1-step
-                else:
-                    self.experience_replay_pool.append(training_example)
-
+                self.experience_replay_pool.append(training_example)
             else:  # 模拟经验（来自于世界模型）
-                # n-step
-                if self.n_step > 1:
-                    self.n_step_pool.append(training_example)
-                    if len(self.n_step_pool) < self.n_step:
-                        return ()
-                    rew, s_prime, done = self._n_step_info(self.n_step_pool, self.gamma)
-                    training_example = (state_t_rep, action_t, rew, s_prime, done, st_user)
-                    self.experience_replay_pool_from_model.append(training_example)
-                # 1-step
-                else:
-                    self.experience_replay_pool_from_model.append(training_example) # 放入世界模型池中
+                self.experience_replay_pool_from_model.append(training_example)
 
         # 若溢出，则保留最新经验
         if len(self.experience_replay_pool) > self.max_user_buffer_size:

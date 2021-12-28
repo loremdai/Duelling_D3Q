@@ -40,7 +40,7 @@ class Network(nn.Module):
 
 
 class NoNoisyNet(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_step):  # (state_dimension, hidden_size, num_actions)
+    def __init__(self, input_size, hidden_size, output_size):  # (state_dimension, hidden_size, num_actions)
         super(NoNoisyNet, self).__init__()
 
         # model
@@ -52,8 +52,8 @@ class NoNoisyNet(nn.Module):
         self.target_model.eval()
 
         # hyper parameters
-        self.n_step = n_step
-        self.gamma = 0.9 ** self.n_step
+        #self.n_step = n_step
+        #self.gamma = 0.9 ** self.n_step
         self.reg_l2 = 1e-3
         self.max_norm = 10
         self.target_update_period = 100
