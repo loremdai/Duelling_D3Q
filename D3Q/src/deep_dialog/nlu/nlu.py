@@ -20,6 +20,7 @@ class nlu:
 
         if len(annot) > 0:
             # 過濾字符串結尾的標點符號。
+            annot=str(annot)
             tmp_annot = annot.strip('.').strip('?').strip(',').strip('!')
 
             rep = self.parse_str_to_vector(tmp_annot)

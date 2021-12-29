@@ -82,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument('--act_level', dest='act_level', type=int, default=0,
                         help='0 for dia_act level; 1 for NL level')
     parser.add_argument('--run_mode', dest='run_mode', type=int, default=0,
-                        help='run_mode: 0 for default NL; 1 for dia_act; 2 for both')
+                        help='run_mode: 0 for default NL; 1 for dia_act; 2 for both; 3 for no display (i.e. training)')
     parser.add_argument('--auto_suggest', dest='auto_suggest', type=int, default=0,
                         help='0 for no auto_suggest; 1 for auto_suggest')
     parser.add_argument('--cmd_input_mode', dest='cmd_input_mode', type=int, default=0,
@@ -136,7 +136,7 @@ if __name__ == "__main__":
                         help='NN model structure of the discriminator [MLP]')
     parser.add_argument('--train_discriminator', dest='train_discriminator', type=int, default=1,
                         help='whether to train the discriminator')
-    parser.add_argument('--model_type', dest='model_type', type=str, default='D3Q', help='model type [DQN, DDQ, D3Q]')
+    parser.add_argument('--model_type', dest='model_type', type=str, default='DDQ', help='model type [DQN, DDQ, D3Q]')
     parser.add_argument('--filter_experience_by_discriminator', dest='filter_experience_by_discriminator', type=int,
                         default=1, help='whether to filter the fake experiences by the discriminator')
     parser.add_argument('--buffer_size_unit', dest='buffer_size_unit', type=int, default=2000,
@@ -306,7 +306,7 @@ elif agt == 5:
 elif agt == 9:
     agent = AgentDQN(movie_kb, act_set, slot_set, agent_params)
 elif agt == 10:
-    agent = Agent_NoNoisyNet(movie_kb, act_set, slot_set, agent_params)     # edit different agents here
+    agent = Agent_NoDDQN(movie_kb, act_set, slot_set, agent_params)     # edit different agents here
 # add your custom agent here
 else:
     pass
