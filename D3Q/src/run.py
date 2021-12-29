@@ -130,13 +130,13 @@ if __name__ == "__main__":
                         help='success rate threshold for agent model')
     parser.add_argument('--pretrain_discriminator', dest='pretrain_discriminator', type=int, default=0,
                         help='whether to pretrain the discriminator')
-    parser.add_argument('--discriminator_nn_type', dest='discriminator_nn_type', type=str, default='MLP',
+    parser.add_argument('--discriminator_nn_type', dest='discriminator_nn_type', type=str, default='RNN',
                         help='NN model structure of the discriminator [MLP, RNN]')
     parser.add_argument('--world_model_nn_type', dest='world_model_nn_type', type=str, default='MLP',
                         help='NN model structure of the discriminator [MLP]')
     parser.add_argument('--train_discriminator', dest='train_discriminator', type=int, default=1,
                         help='whether to train the discriminator')
-    parser.add_argument('--model_type', dest='model_type', type=str, default='DDQ', help='model type [DQN, DDQ, D3Q]')
+    parser.add_argument('--model_type', dest='model_type', type=str, default='D3Q', help='model type [DQN, DDQ, D3Q]')
     parser.add_argument('--filter_experience_by_discriminator', dest='filter_experience_by_discriminator', type=int,
                         default=1, help='whether to filter the fake experiences by the discriminator')
     parser.add_argument('--buffer_size_unit', dest='buffer_size_unit', type=int, default=2000,
