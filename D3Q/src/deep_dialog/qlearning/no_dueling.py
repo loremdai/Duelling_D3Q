@@ -9,6 +9,7 @@ import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 class NoisyLinear(nn.Module):
     def __init__(self, input_size, output_size, std_init=0.5):
         super(NoisyLinear, self).__init__()
@@ -67,13 +68,14 @@ class NoisyLinear(nn.Module):
 
         return x.sign().mul(x.abs().sqrt())
 
+
 # A basic NoisyNet (Without Dueling Network)
 class Network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(Network, self).__init__()
 
-        self.feature = nn.Linear(input_size,hidden_size)
-        self.noisy_layer= NoisyLinear(hidden_size,output_size)
+        self.feature = nn.Linear(input_size, hidden_size)
+        self.noisy_layer = NoisyLinear(hidden_size, output_size)
 
     def forward(self, inputs):
         feature = F.relu(self.feature(inputs))
@@ -84,8 +86,9 @@ class Network(nn.Module):
         """Reset all noisy layers."""
         self.noisy_layer.reset_noise()
 
+
 class NoDueling(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_step):  # (state_dimension, hidden_size, num_actions)
+    def __init__(self, input_size, hidden_size, output_size):  # (state_dimension, hidden_size, num_actions)
         super(NoDueling, self).__init__()
 
         # model
@@ -97,8 +100,9 @@ class NoDueling(nn.Module):
         self.target_model.eval()
 
         # hyper parameters
-        self.n_step = n_step
-        self.gamma = 0.9 ** self.n_step
+        # self.n_step = n_step
+        # self.gamma = 0.9 ** self.n_step
+        self.gamma = 0.9
         self.reg_l2 = 1e-3
         self.max_norm = 10
         # self.target_update_period = 10
