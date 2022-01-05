@@ -306,7 +306,7 @@ elif agt == 5:
 elif agt == 9:
     agent = AgentDQN(movie_kb, act_set, slot_set, agent_params)
 elif agt == 10:
-    agent = Agent_NoNStep(movie_kb, act_set, slot_set, agent_params)     # edit different agents here
+    agent = Agent_NoNStep(movie_kb, act_set, slot_set, agent_params)    # edit different agents here
 # add your custom agent here
 else:
     pass
