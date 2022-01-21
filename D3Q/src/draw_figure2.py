@@ -101,7 +101,7 @@ def main(params):
     plt.ylabel('Success rate')
     plt.xlabel('Epoch')
     plt.legend(curve_list, label_list, loc=4)
-    plt.xlim([0, 500])
+    plt.xlim([0, 400])
     plt.ylim([0, 1])
     plt.savefig('./figure.pdf', format='pdf')
 

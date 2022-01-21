@@ -87,9 +87,9 @@ def main(params):
         './deep_dialog/checkpoints/dqn_5',
         './deep_dialog/checkpoints/ddq_5',
         './deep_dialog/checkpoints/d3q_rnn_5',
-        './deep_dialog/checkpoints/no_dueling_5'
+        './deep_dialog/checkpoints/nstep_5'
     ]
-    label_list = ['DQN(1)', 'DQN(5)', 'DDQ(5)', 'D3Q', 'No_Dueling']
+    label_list = ['DQN(1)', 'DQN(5)', 'DDQ(5)', 'D3Q(5)', 'Our Model']
 
     curve_list = []
     for i, model in enumerate(model_path_list):
