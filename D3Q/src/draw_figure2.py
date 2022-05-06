@@ -94,15 +94,15 @@ def main(params):
     curve_list = []
     for i, model in enumerate(model_path_list):
         record_list = range(1, 4)   # 传入给draw函数
-        curve_list.append(draw(model_path=model, color=colors[i], marker=markers[i], linestyle=linestyles[i],
+        curve_list.append(draw(model_path=model, color=colors[i], marker=markers[0], linestyle=linestyles[0],
                                record_list=record_list))
 
     plt.grid(True)
     plt.ylabel('Success rate')
     plt.xlabel('Epoch')
     plt.legend(curve_list, label_list, loc=4)
-    plt.xlim([0, 400])
-    plt.ylim([0, 1])
+    plt.xlim([0, 350])
+    plt.ylim([0, 0.85])
     plt.savefig('./figure.pdf', format='pdf')
 
 

@@ -83,13 +83,13 @@ def main(params):
 
     # example
     model_path_list = [
-        './deep_dialog/checkpoints/dqn_1',
-        './deep_dialog/checkpoints/dqn_5',
-        './deep_dialog/checkpoints/ddq_5',
-        './deep_dialog/checkpoints/d3q_rnn_5',
-        './deep_dialog/checkpoints/nstep_5'
+        './deep_dialog/checkpoints/planning_2',
+        './deep_dialog/checkpoints/planning_3',
+        './deep_dialog/checkpoints/planning_5',
+        './deep_dialog/checkpoints/planning_10',
+        './deep_dialog/checkpoints/planning_15',
     ]
-    label_list = ['DQN(1)', 'DQN(5)', 'DDQ(5)', 'D3Q(5)', 'Our Model']
+    label_list = ['K=2', 'K=3', 'K=5', 'K=10', 'K=15']
 
     curve_list = []
     for i, model in enumerate(model_path_list):
@@ -102,7 +102,7 @@ def main(params):
     plt.xlabel('Epoch')
     plt.legend(curve_list, label_list, loc=4)
     plt.xlim([0, 350])
-    plt.ylim([0, 1])
+    plt.ylim([0, 0.85])
     plt.savefig('./figure.pdf', format='pdf')
 
 
