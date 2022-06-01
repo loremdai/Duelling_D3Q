@@ -1,13 +1,8 @@
-# coding=utf-8
 import argparse, json
 import matplotlib
 from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
-
-from matplotlib.font_manager import fontManager
-fontManager.addfont('simhei.ttf')
-matplotlib.rc('font', family='SimHei')
 
 
 matplotlib.use('Agg')
