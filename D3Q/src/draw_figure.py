@@ -1,10 +1,13 @@
 import argparse, json
 import matplotlib
-
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
+
+plt.rcParams['font.sans-serif']=['Songti SC'] #显示中文标签
+plt.rcParams['axes.unicode_minus']=False   #这两行需要手动设置
+
+matplotlib.use('Agg')
 
 sns.set(style="darkgrid")
 sns.set(font_scale=1.6)
@@ -98,11 +101,11 @@ def main(params):
                                record_list=record_list))
 
     plt.grid(True)
-    plt.ylabel('Success rate')
-    plt.xlabel('Epoch')
+    plt.ylabel('任务成功率')
+    plt.xlabel('实验轮数')
     plt.legend(curve_list, label_list, loc=4)
     plt.xlim([0, 350])
-    plt.ylim([0, 1])
+    plt.ylim([0, 0.9])
     plt.savefig('./figure.pdf', format='pdf')
 
 

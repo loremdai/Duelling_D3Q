@@ -65,6 +65,7 @@ def draw(color, marker, linestyle, record_list=range(1, 4), model_path="", attri
         datapoints.append(
             read_performance('{}_{}/agt_9_performance_records.json'.format(model_path, i), attribute))
 
+
     min_len = min(len(i) for i in datapoints)
     data = np.asarray([i[0:min_len] for i in datapoints])
     mean = np.mean(data, axis=0)
@@ -76,7 +77,7 @@ def draw(color, marker, linestyle, record_list=range(1, 4), model_path="", attri
 
 
 def main(params):
-    colors = ['#2f79c0', '#278b18', '#ff5186', '#8660a4', '#cd0b04', '#FF8800']
+    colors = ['#2f79c0', '#278b18', '#ff5186', '#8660a4', '#FF8C00', '#FF8800']
     markers = [',', 'o', '^', 's', 'p', 'd']
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted', '-.', '--', '-', ':']
     global_idx = 1500
@@ -89,7 +90,7 @@ def main(params):
         './deep_dialog/checkpoints/no_noisynet_5',
         './deep_dialog/checkpoints/no_nstep_5',
     ]
-    label_list = ['Our Model', 'No_DDQN', 'No_Dueling', 'No_NoisyNet', 'No_NStep']
+    label_list = ['Our Model', 'No_DDQN', 'No_Dueling', 'No_NoisyNet', 'No_nStep']
 
     curve_list = []
     for i, model in enumerate(model_path_list):
@@ -98,8 +99,8 @@ def main(params):
                                record_list=record_list))
 
     plt.grid(True)
-    plt.ylabel('Success rate')
-    plt.xlabel('Epoch')
+    plt.ylabel('任务成功率')
+    plt.xlabel('实验轮数')
     plt.legend(curve_list, label_list, loc=4)
     plt.xlim([0, 350])
     plt.ylim([0, 0.85])
