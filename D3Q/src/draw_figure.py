@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
 
-plt.rcParams['font.sans-serif']=['Songti'] #显示中文标签
+plt.rcParams['font.sans-serif']=['Microsoft YaHei'] #显示中文标签
 plt.rcParams['axes.unicode_minus']=False   #这两行需要手动设置
 
 matplotlib.use('Agg')
