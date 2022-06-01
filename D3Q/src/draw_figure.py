@@ -1,11 +1,14 @@
+# coding=utf-8
 import argparse, json
 import matplotlib
 from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
 
-plt.rcParams['font.sans-serif']=['Microsoft YaHei'] #显示中文标签
-plt.rcParams['axes.unicode_minus']=False   #这两行需要手动设置
+from matplotlib.font_manager import fontManager
+fontManager.addfont('simhei.ttf')
+matplotlib.rc('font', family='SimHei')
+
 
 matplotlib.use('Agg')
 
